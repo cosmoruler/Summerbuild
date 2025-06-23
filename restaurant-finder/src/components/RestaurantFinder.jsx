@@ -8,159 +8,191 @@ import { Card } from "@/components/ui/card";
 import { Filter } from "lucide-react";
 import useUserLocation from "../useUserLocation"; // adjust path if needed
 import useRecommendations from "../hooks/useRecommendations"; // Import the custom hook
+import RestaurantMap from './RestaurantMap';
 
+// Define filter options for each category
+const amenityTypes = ["Restaurant", "Cafe", "Bar", "Pub", "Biergarten", "Food Court"];
 const cuisineList = [
-	{ name: "Malaysian", count: 8 },
-	{ name: "Peranakan", count: 3 },
-	{ name: "Seafood", count: 44 },
-	{ name: "Shanghainese", count: 1 },
-	{ name: "Sichuan", count: 46 },
-	{ name: "Singaporean", count: 50 },
-	{ name: "Southeast Asian", count: 8 },
-	{ name: "Taiwanese", count: 4 },
-	{ name: "Thai", count: 3 },
-	{ name: "Themed", count: 1 },
-	{ name: "Vegan", count: 1 },
-	{ name: "Vegetarian", count: 8 },
-	{ name: "Western", count: 2 },
+	"Malaysian", "Peranakan", "Seafood", "Shanghainese", "Sichuan", "Singaporean",
+	"Southeast Asian", "Taiwanese", "Thai", "Themed", "Vegan", "Vegetarian", "Western"
 ];
+const dietaryOptions = ["Vegan", "Vegetarian", "Gluten Free", "Halal", "Kosher"];
+const seatingFeatures = ["Outdoor Seating", "Indoor Seating", "Takeaway", "Delivery", "Drive Through", "Reservation"];
+const paymentOptions = ["Credit Card", "Cash"];
+const accessibilityOptions = ["Wheelchair Accessible", "Wheelchair Toilet"];
+const otherOptions = ["WiFi", "Kids Area", "Pet Friendly", "Live Music", "Organic"];
+const priceLevels = ["$", "$$", "$$$", "$$$$", "$$$$$"];
 
 export default function RestaurantFinder() {
 	const [view, setView] = useState("map");
 	const [searchTerm, setSearchTerm] = useState("");
-	const [selectedCuisines, setSelectedCuisines] = useState([]);
-	const [showAllCuisines, setShowAllCuisines] = useState(false);
-	const [ratingRange, setRatingRange] = useState([1, 6]);
-	const [priceRange, setPriceRange] = useState([1, 5]);
-	const [bookable, setBookable] = useState(false);
+	const [selectedFilters, setSelectedFilters] = useState([]); // All filter labels
 	const userLocation = useUserLocation();
 	const { results, loading, error } = useRecommendations(userLocation, searchTerm);
 
-	const toggleSelection = (item, list, setList) => {
-		setList(
-			list.includes(item)
-				? list.filter((i) => i !== item)
-				: [...list, item]
-		);
+	// Helper: Add or remove a filter label from the search bar and state
+	const toggleFilter = (label) => {
+		let newFilters;
+		if (selectedFilters.includes(label)) {
+			// Remove label from selected filters
+			newFilters = selectedFilters.filter(f => f !== label);
+		} else {
+			// Add label to selected filters
+			newFilters = [...selectedFilters, label];
+		}
+		setSelectedFilters(newFilters);
+		// Update search bar: remove all filter labels, then append new ones
+		let baseTerm = searchTerm;
+		[
+			...amenityTypes,
+			...cuisineList,
+			...dietaryOptions,
+			...seatingFeatures,
+			...paymentOptions,
+			...accessibilityOptions,
+			...otherOptions,
+			...priceLevels
+		].forEach(f => {
+			baseTerm = baseTerm.replace(new RegExp(`\\b${f}\\b`, 'gi'), '').trim();
+		});
+		const filterText = newFilters.join(' ');
+		setSearchTerm((baseTerm + ' ' + filterText).trim());
 	};
 
 	return (
-		<div className="max-w-5xl mx-auto p-4">
-			<div className="flex items-center justify-between gap-4 mb-4">
-				<div className="flex gap-2">
+		<div className="max-w-5xl mx-auto p-2 sm:p-4 w-full">
+			<div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 mb-4 w-full">
+				<div className="flex gap-2 w-full sm:w-auto justify-center sm:justify-start">
 					<Button
 						variant={view === "map" ? "default" : "outline"}
 						onClick={() => setView("map")}
+						className="flex-1 sm:flex-none"
 					>
 						Map
 					</Button>
 					<Button
 						variant={view === "list" ? "default" : "outline"}
 						onClick={() => setView("list")}
+						className="flex-1 sm:flex-none"
 					>
 						List
 					</Button>
 				</div>
 				<Input
 					placeholder="Search restaurants..."
-					className="w-full"
+					className="w-full sm:w-auto"
 					value={searchTerm}
-					onChange={(e) => setSearchTerm(e.target.value)}
+					onChange={e => setSearchTerm(e.target.value)}
 				/>
-				<Sheet>
-					<SheetTrigger asChild>
-						<Button variant="outline">
-							<Filter className="mr-2 h-4 w-4" />
-							Filters
-						</Button>
-					</SheetTrigger>
-					<SheetContent
-						side="left"
-						className="w-[400px] sm:w-[500px] overflow-y-auto"
-					>
-						<h2 className="text-lg font-semibold mb-4">Filters</h2>
-
-						<div className="mb-4">
-							<h3 className="font-medium mb-2">Cuisine</h3>
-							{(showAllCuisines ? cuisineList : cuisineList.slice(0, 6)).map(
-								(c) => (
-									<div key={c.name} className="flex items-center mb-1">
-										<Checkbox
-											checked={selectedCuisines.includes(c.name)}
-											onCheckedChange={() =>
-												toggleSelection(
-													c.name,
-													selectedCuisines,
-													setSelectedCuisines
-												)
-											}
-										/>
-										<label className="ml-2 text-sm">
-											{c.name} ({c.count})
-										</label>
-									</div>
-								)
-							)}
-							<Button
-								variant="link"
-								className="text-xs p-0 mt-1"
-								onClick={() => setShowAllCuisines(!showAllCuisines)}
-							>
-								{showAllCuisines ? "Show less" : "Show more"}
-							</Button>
-						</div>
-
-						<div className="mb-4">
-							<h3 className="font-medium mb-2">Review Score</h3>
-							<Slider
-								min={1}
-								max={6}
-								step={1}
-								defaultValue={ratingRange}
-								onValueChange={setRatingRange}
-							/>
-							<p className="text-sm mt-1 text-muted-foreground">
-								{ratingRange[0]} - {ratingRange[1]}
-							</p>
-						</div>
-
-						<div className="mb-4">
-							<h3 className="font-medium mb-2">Restaurant Price</h3>
-							<Slider
-								min={1}
-								max={5}
-								step={1}
-								defaultValue={priceRange}
-								onValueChange={setPriceRange}
-							/>
-							<div className="flex justify-between text-sm mt-1 text-muted-foreground">
-								<span>$</span>
-								<span>$$</span>
-								<span>$$$</span>
-								<span>$$$$</span>
-								<span>$$$$$</span>
-							</div>
-						</div>
-
-						<div className="flex items-center space-x-2 mb-4">
-							<Checkbox
-								checked={bookable}
-								onCheckedChange={() => setBookable(!bookable)}
-							/>
-							<label className="text-sm">Bookable online</label>
-						</div>
-
-						<Button className="w-full mt-2">Apply Filters</Button>
-					</SheetContent>
-				</Sheet>
 			</div>
 
-			{view === "list" ? (
-				<div className="grid gap-4">
+			{/* Filter controls: Amenity Type */}
+			<div className="flex flex-wrap gap-2 mb-2">
+				{amenityTypes.map(type => (
+					<Checkbox
+						key={type}
+						checked={selectedFilters.includes(type)}
+						onCheckedChange={() => toggleFilter(type)}
+						id={`amenity-${type}`}
+					/>
+				))}
+				<span className="text-xs text-gray-500 ml-2">Amenity Type</span>
+			</div>
+			{/* Cuisine */}
+			<div className="flex flex-wrap gap-2 mb-2">
+				{cuisineList.map(cuisine => (
+					<Checkbox
+						key={cuisine}
+						checked={selectedFilters.includes(cuisine)}
+						onCheckedChange={() => toggleFilter(cuisine)}
+						id={`cuisine-${cuisine}`}
+					/>
+				))}
+				<span className="text-xs text-gray-500 ml-2">Cuisine</span>
+			</div>
+			{/* Dietary/Options */}
+			<div className="flex flex-wrap gap-2 mb-2">
+				{dietaryOptions.map(opt => (
+					<Checkbox
+						key={opt}
+						checked={selectedFilters.includes(opt)}
+						onCheckedChange={() => toggleFilter(opt)}
+						id={`dietary-${opt}`}
+					/>
+				))}
+				<span className="text-xs text-gray-500 ml-2">Dietary/Options</span>
+			</div>
+			{/* Seating/Features */}
+			<div className="flex flex-wrap gap-2 mb-2">
+				{seatingFeatures.map(feat => (
+					<Checkbox
+						key={feat}
+						checked={selectedFilters.includes(feat)}
+						onCheckedChange={() => toggleFilter(feat)}
+						id={`seating-${feat}`}
+					/>
+				))}
+				<span className="text-xs text-gray-500 ml-2">Seating/Features</span>
+			</div>
+			{/* Payment */}
+			<div className="flex flex-wrap gap-2 mb-2">
+				{paymentOptions.map(pay => (
+					<Checkbox
+						key={pay}
+						checked={selectedFilters.includes(pay)}
+						onCheckedChange={() => toggleFilter(pay)}
+						id={`payment-${pay}`}
+					/>
+				))}
+				<span className="text-xs text-gray-500 ml-2">Payment</span>
+			</div>
+			{/* Accessibility */}
+			<div className="flex flex-wrap gap-2 mb-2">
+				{accessibilityOptions.map(acc => (
+					<Checkbox
+						key={acc}
+						checked={selectedFilters.includes(acc)}
+						onCheckedChange={() => toggleFilter(acc)}
+						id={`accessibility-${acc}`}
+					/>
+				))}
+				<span className="text-xs text-gray-500 ml-2">Accessibility</span>
+			</div>
+			{/* Price Level */}
+			<div className="flex flex-wrap gap-2 mb-2">
+				{priceLevels.map(price => (
+					<Checkbox
+						key={price}
+						checked={selectedFilters.includes(price)}
+						onCheckedChange={() => toggleFilter(price)}
+						id={`price-${price}`}
+					/>
+				))}
+				<span className="text-xs text-gray-500 ml-2">Price Level</span>
+			</div>
+			{/* Others */}
+			<div className="flex flex-wrap gap-2 mb-4">
+				{otherOptions.map(opt => (
+					<Checkbox
+						key={opt}
+						checked={selectedFilters.includes(opt)}
+						onCheckedChange={() => toggleFilter(opt)}
+						id={`other-${opt}`}
+					/>
+				))}
+				<span className="text-xs text-gray-500 ml-2">Others</span>
+			</div>
+
+			{view === "map" ? (
+				<div className="w-full mb-4">
+					<RestaurantMap restaurants={results} userLocation={userLocation} />
+				</div>
+			) : (
+				<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
 					{loading && <p>Loading...</p>}
 					{error && <p className="text-red-500">{error}</p>}
 					{results.map((restaurant, i) => (
-						<Card key={restaurant.name + i} className="p-4 shadow-md rounded-xl">
+						<Card key={restaurant.name + i} className="p-4 shadow-md rounded-xl w-full">
 							<h3 className="font-semibold text-lg">{restaurant.name}</h3>
 							<p className="text-sm text-muted-foreground">
 								{restaurant.cuisine} | {restaurant.address?.['addr:street'] || ""}
@@ -171,10 +203,6 @@ export default function RestaurantFinder() {
 						</Card>
 					))}
 					{!loading && results.length === 0 && <p>No results found.</p>}
-				</div>
-			) : (
-				<div className="text-center py-12 text-muted-foreground">
-					Map view placeholder (add Mapbox or Google Maps here)
 				</div>
 			)}
 		</div>
