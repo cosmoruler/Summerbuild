@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -6,7 +6,9 @@ import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Card } from "@/components/ui/card";
 import { Filter } from "lucide-react";
-//HHAHA
+import useUserLocation from "../useUserLocation"; // adjust path if needed
+import useRecommendations from "../hooks/useRecommendations"; // Import the custom hook
+
 const cuisineList = [
 	{ name: "Malaysian", count: 8 },
 	{ name: "Peranakan", count: 3 },
@@ -31,6 +33,8 @@ export default function RestaurantFinder() {
 	const [ratingRange, setRatingRange] = useState([1, 6]);
 	const [priceRange, setPriceRange] = useState([1, 5]);
 	const [bookable, setBookable] = useState(false);
+	const userLocation = useUserLocation();
+	const { results, loading, error } = useRecommendations(userLocation, searchTerm);
 
 	const toggleSelection = (item, list, setList) => {
 		setList(
@@ -153,20 +157,20 @@ export default function RestaurantFinder() {
 
 			{view === "list" ? (
 				<div className="grid gap-4">
-					{[...Array(3)].map((_, i) => (
-						<Card key={i} className="p-4 shadow-md rounded-xl">
-							<h3 className="font-semibold text-lg">Restaurant {i + 1}</h3>
+					{loading && <p>Loading...</p>}
+					{error && <p className="text-red-500">{error}</p>}
+					{results.map((restaurant, i) => (
+						<Card key={restaurant.name + i} className="p-4 shadow-md rounded-xl">
+							<h3 className="font-semibold text-lg">{restaurant.name}</h3>
 							<p className="text-sm text-muted-foreground">
-								Sample description of the restaurant.
+								{restaurant.cuisine} | {restaurant.address?.['addr:street'] || ""}
 							</p>
 							<div className="flex justify-between items-center mt-3">
-								<span className="text-red-500 font-medium text-sm">
-									from $15
-								</span>
 								<Button size="sm">Details</Button>
 							</div>
 						</Card>
 					))}
+					{!loading && results.length === 0 && <p>No results found.</p>}
 				</div>
 			) : (
 				<div className="text-center py-12 text-muted-foreground">

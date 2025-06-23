@@ -1,10 +1,19 @@
 #FastAPI entry point
 from fastapi import FastAPI, Query
 from rec_engine.recommendation_engine import PlacesAPIClient, PlaceRecommender
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 client = PlacesAPIClient()
 recommender = PlaceRecommender()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Frontend dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/api/recommend")
 def recommend(
