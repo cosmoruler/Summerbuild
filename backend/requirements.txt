@@ -1,0 +1,8 @@
+#python dependencies
+fastapi #available at localhost:8000
+uvicorn
+requests
+geopy
+sentence-transformers
+scikit-learn
+numpy
