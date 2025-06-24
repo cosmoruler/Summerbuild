@@ -9,7 +9,7 @@ recommender = PlaceRecommender()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend dev server
+    allow_origins=["http://localhost:5173"],  # Or ["*"] for all origins (not recommended for production)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,6 +29,8 @@ def recommend(
 ):
     # Fetch places from Overpass API
     places = client.search_nearby((lat, lon), radius=3000, places_type=["amenity=restaurant", "amenity=cafe"], limit=50)
+    if not places:
+        return {"results": []}
     # Get recommendations using semantic search
     raw_recommendations = recommender.get_recommendations(places, query=query, top_n=top_n*3)  # get more to filter
     # Clean recommendations for frontend

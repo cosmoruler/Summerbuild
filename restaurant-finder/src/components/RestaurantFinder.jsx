@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Card } from "@/components/ui/card";
-import { Filter, Menu, Search } from "lucide-react";
+import { Filter, Menu, Search, X } from "lucide-react";
 import useRecommendations from "../hooks/useRecommendations"; // Import the custom hook
 import RestaurantMap from './RestaurantMap';
 
@@ -56,6 +56,16 @@ export default function RestaurantFinder({ userLocation }) {
 		ratingRange,
 		bookable
 	);
+	const [selectedPlace, setSelectedPlace] = useState(null);
+	const [searchPerformed, setSearchPerformed] = useState(false);
+	const autoSearchedRef = useRef(false);
+
+	// Count the number of restaurants for each cuisine in the current results
+	const cuisineCounts = results.reduce((acc, restaurant) => {
+		const cuisine = restaurant.cuisine || "Not specified";
+		acc[cuisine] = (acc[cuisine] || 0) + 1;
+		return acc;
+	}, {});
 
 	// Helper: Add or remove a filter label from the search bar and state
 	const toggleFilter = (label) => {
@@ -89,6 +99,39 @@ export default function RestaurantFinder({ userLocation }) {
 	// Cuisine show more/less logic
 	const visibleCuisines = showAllCuisines ? cuisineList : cuisineList.slice(0, 6);
 
+	// Auto-search nearby amenities on initial load if userLocation is available and no search has been performed
+	useEffect(() => {
+		if (
+			userLocation &&
+			!searchPerformed &&
+			!autoSearchedRef.current
+		) {
+			// Set a default search term or filters for nearby amenities
+			setSearchTerm(""); // Empty search term
+			setSelectedFilters(["Restaurant", "Cafe"]); // Default amenity types
+			setPriceRange([1, 5]);
+			setRatingRange([1, 6]);
+			setBookable(false);
+			autoSearchedRef.current = true;
+		}
+	}, [userLocation, searchPerformed]);
+
+	// Update searchPerformed when user searches or changes filters
+	useEffect(() => {
+		// Consider a search performed if searchTerm is not empty or any filters are set
+		if (
+			(searchTerm && searchTerm.trim() !== '') ||
+			selectedFilters.length > 0 ||
+			priceRange[0] !== 1 || priceRange[1] !== 5 ||
+			ratingRange[0] !== 1 || ratingRange[1] !== 6 ||
+			bookable
+		) {
+			setSearchPerformed(true);
+		} else {
+			setSearchPerformed(false);
+		}
+	}, [searchTerm, selectedFilters, priceRange, ratingRange, bookable]);
+
 	return (
 		<div className="max-w-7xl mx-auto p-2 sm:p-4 w-full">
 			{/* Top Search Bar with Menu and Search Icons */}
@@ -106,6 +149,23 @@ export default function RestaurantFinder({ userLocation }) {
 						value={searchTerm}
 						onChange={e => setSearchTerm(e.target.value)}
 					/>
+					{/* Clear (cross) button - only show if search or filters are active */}
+					{(searchTerm || selectedFilters.length > 0 || priceRange[0] !== 1 || priceRange[1] !== 5 || ratingRange[0] !== 1 || ratingRange[1] !== 6 || bookable) && (
+						<button
+							className="ml-2 text-gray-400 hover:text-red-500 focus:outline-none"
+							aria-label="Clear search and filters"
+							onClick={() => {
+								setSearchTerm("");
+								setSelectedFilters([]);
+								setPriceRange([1, 5]);
+								setRatingRange([1, 6]);
+								setBookable(false);
+							}}
+							tabIndex={0}
+						>
+							<X size={22} />
+						</button>
+					)}
 					{/* Search Icon */}
 					<button className="text-red-500 ml-2">
 						<Search size={24} />
@@ -152,14 +212,19 @@ export default function RestaurantFinder({ userLocation }) {
 					{/* Cuisine with Show more/less */}
 					<div className="mb-6">
 						<h3 className="font-medium mb-2">Cuisine</h3>
-						{visibleCuisines.map(c => (
-							<div key={c} className="flex items-center mb-1">
+						{cuisineList.map(cuisine => (
+							<div key={cuisine} className="flex items-center mb-1">
 								<Checkbox
-									checked={selectedFilters.includes(c)}
-									onCheckedChange={() => toggleFilter(c)}
-									id={`cuisine-${c}`}
+									checked={selectedFilters.includes(cuisine)}
+									onCheckedChange={() => toggleFilter(cuisine)}
+									id={`cuisine-${cuisine}`}
 								/>
-								<label className="ml-2 text-sm" htmlFor={`cuisine-${c}`}>{c}</label>
+								<label
+									className={`ml-2 text-sm ${selectedFilters.includes(cuisine) ? "text-orange-500" : ""}`}
+									htmlFor={`cuisine-${cuisine}`}
+								>
+									{cuisine} ({cuisineCounts[cuisine] || 0})
+								</label>
 							</div>
 						))}
 						<button
@@ -315,14 +380,19 @@ export default function RestaurantFinder({ userLocation }) {
 							{/* Cuisine with Show more/less */}
 							<div className="mb-6">
 								<h3 className="font-medium mb-2">Cuisine</h3>
-								{visibleCuisines.map(c => (
-									<div key={c} className="flex items-center mb-1">
+								{cuisineList.map(cuisine => (
+									<div key={cuisine} className="flex items-center mb-1">
 										<Checkbox
-											checked={selectedFilters.includes(c)}
-											onCheckedChange={() => toggleFilter(c)}
-											id={`cuisine-mobile-${c}`}
+											checked={selectedFilters.includes(cuisine)}
+											onCheckedChange={() => toggleFilter(cuisine)}
+											id={`cuisine-mobile-${cuisine}`}
 										/>
-										<label className="ml-2 text-sm" htmlFor={`cuisine-mobile-${c}`}>{c}</label>
+										<label
+											className={`ml-2 text-sm ${selectedFilters.includes(cuisine) ? "text-orange-500" : ""}`}
+											htmlFor={`cuisine-mobile-${cuisine}`}
+										>
+											{cuisine} ({cuisineCounts[cuisine] || 0})
+										</label>
 									</div>
 								))}
 								<button
@@ -456,23 +526,67 @@ export default function RestaurantFinder({ userLocation }) {
 				{/* Main Content (Map/List) */}
 				<div className="flex-1 h-full relative">
 					{view === "map" ? (
-						<RestaurantMap restaurants={results} userLocation={userLocation} />
+						<RestaurantMap
+							restaurants={results}
+							userLocation={userLocation}
+							selectedPlace={selectedPlace}
+							setSelectedPlace={setSelectedPlace}
+							searchPerformed={searchPerformed}
+						/>
 					) : (
 						<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
 							{loading && <p>Loading...</p>}
 							{error && <p className="text-red-500">{error}</p>}
+							{/* Show a friendly message if no places are found */}
+							{!loading && !error && results.length === 0 && (
+								<div className="col-span-full flex flex-col items-center justify-center py-16">
+									{/* Icon (e.g., map pin with a question mark) */}
+									<svg width="48" height="48" fill="none" viewBox="0 0 48 48" className="mb-4 text-gray-300"><circle cx="24" cy="24" r="22" stroke="#E53E3E" strokeWidth="3" fill="#FFF5F5"/><path d="M24 32v-2m0-12a4 4 0 0 1 4 4c0 2-2 3-2 3s-2 1-2 3" stroke="#E53E3E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="24" cy="36" r="1.5" fill="#E53E3E"/></svg>
+									<h2 className="text-lg font-semibold text-gray-700 mb-2">No places found</h2>
+									<p className="text-gray-500 text-sm text-center max-w-xs">Try adjusting your search, filters, or zooming out to find more restaurants and cafes in the area.</p>
+								</div>
+							)}
 							{results.map((restaurant, i) => (
-								<Card key={restaurant.name + i} className="p-4 shadow-md rounded-xl w-full">
-									<h3 className="font-semibold text-lg">{restaurant.name}</h3>
-									<p className="text-sm text-muted-foreground">
-										{restaurant.cuisine} | {restaurant.address?.['addr:street'] || ""}
-									</p>
-									<div className="flex justify-between items-center mt-3">
-										<Button size="sm">Details</Button>
+								<Card
+									key={restaurant.name + i}
+									className={`p-4 shadow-md rounded-xl w-full cursor-pointer transition border-2 bg-white text-gray-900 font-sans ${
+										selectedPlace === restaurant.name ? 'border-red-500 ring-2 ring-red-200' : 'border-transparent'
+									}`}
+									onClick={() => setSelectedPlace(restaurant.name)}
+								>
+									<div className="flex items-center">
+										{/* Thumbnail or placeholder */}
+										<img
+											src={restaurant.image || '/placeholder.jpg'}
+											alt={restaurant.name}
+											className="w-16 h-16 rounded-lg object-cover mr-4 bg-gray-100"
+										/>
+										<div className="flex-1 min-w-0">
+											<h3 className="font-semibold text-lg truncate">{restaurant.name}</h3>
+											<div className="flex items-center text-yellow-500 text-sm mt-1">
+												<span>★</span>
+												<span className="ml-1 font-medium text-gray-800">{restaurant.rating || 'N/A'}</span>
+												{restaurant.review_count && (
+													<span className="ml-2 text-gray-400 text-xs">{restaurant.review_count} reviews</span>
+												)}
+											</div>
+											<div className="text-xs text-gray-500 mt-1 truncate">{restaurant.cuisine}</div>
+											<div className="text-xs text-gray-500 truncate">{restaurant.address?.['addr:street'] || ''}</div>
+										</div>
+									</div>
+									{/* Feature icons and distance */}
+									<div className="flex items-center mt-2 text-xs text-gray-600 gap-2">
+										{/* Example feature icons, add more as needed */}
+										{restaurant.cuisine?.toLowerCase().includes('vegan') && <span title="Vegan">🥦</span>}
+										{restaurant.cuisine?.toLowerCase().includes('vegetarian') && <span title="Vegetarian">🥗</span>}
+										{/* Add more icons for features like outdoor seating, etc. */}
+										<span className="ml-auto">{restaurant.distance ? `${restaurant.distance} mi` : ''}</span>
+									</div>
+									<div className="flex justify-end mt-2">
+										<Button size="sm" variant="outline">Details</Button>
 									</div>
 								</Card>
 							))}
-							{!loading && results.length === 0 && <p>No results found.</p>}
 						</div>
 					)}
 				</div>

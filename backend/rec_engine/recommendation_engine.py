@@ -388,14 +388,16 @@ class PlaceRecommender:
     
     def _clean_recommendations(self, results: List[Dict]):
         """Preprocess results into readable format"""
-        res=[]
-        #add wtv u want
-        for place in results:   
+        res = []
+        for place in results:
             place_info = {
                 'name': place.get('name', 'Unknown'),
                 'cuisine': place.get('type', {}).get('cuisine', 'Not specified'),
                 'similarity_score': place.get('similarity_score', 0),
-                'address': place.get('address', {})}
+                'address': place.get('address', {}),
+                'lat': place.get('lat'),
+                'lon': place.get('lon'),
+            }
             res.append(place_info)
         return res
     
