@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Filter, Menu, Search } from "lucide-react";
 import useRecommendations from "../hooks/useRecommendations"; // Import the custom hook
 import RestaurantMap from './RestaurantMap';
+import RestaurantDetails from "./RestaurantDetails";
 
 // Dummy Switch component for toggles (replace with your UI lib if available)
 function Switch({ checked, onCheckedChange, id }) {
@@ -25,6 +26,21 @@ function Switch({ checked, onCheckedChange, id }) {
 			</div>
 		</label>
 	);
+}
+
+// Helper: Calculate distance between two lat/lon points (Haversine formula)
+function getDistance(lat1, lon1, lat2, lon2) {
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const R = 6371; // Earth radius in km
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 // Define filter options for each category
@@ -49,6 +65,7 @@ export default function RestaurantFinder({ userLocation }) {
 	const [priceRange, setPriceRange] = useState([1, 5]);
 	const [bookable, setBookable] = useState(false);
 	const [showFilters, setShowFilters] = useState(false); // For mobile filter overlay
+	const [selectedRestaurant, setSelectedRestaurant] = useState(null);
 	const { results, loading, error } = useRecommendations(
 		userLocation,
 		searchTerm,
@@ -88,6 +105,16 @@ export default function RestaurantFinder({ userLocation }) {
 
 	// Cuisine show more/less logic
 	const visibleCuisines = showAllCuisines ? cuisineList : cuisineList.slice(0, 6);
+
+	// Sort and limit nearest results for map
+	let mapResults = results;
+	if (view === "map" && userLocation && userLocation.lat && userLocation.lng) {
+		mapResults = [...results]
+			.filter(r => r.lat && r.lon)
+			.map(r => ({ ...r, _distance: getDistance(userLocation.lat, userLocation.lng, r.lat, r.lon) }))
+			.sort((a, b) => a._distance - b._distance)
+			.slice(0, 20); // Show 20 nearest
+	}
 
 	return (
 		<div className="max-w-7xl mx-auto p-2 sm:p-4 w-full">
@@ -456,7 +483,7 @@ export default function RestaurantFinder({ userLocation }) {
 				{/* Main Content (Map/List) */}
 				<div className="flex-1 h-full relative">
 					{view === "map" ? (
-						<RestaurantMap restaurants={results} userLocation={userLocation} />
+						<RestaurantMap restaurants={mapResults} userLocation={userLocation} />
 					) : (
 						<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
 							{loading && <p>Loading...</p>}
@@ -466,14 +493,32 @@ export default function RestaurantFinder({ userLocation }) {
 									<h3 className="font-semibold text-lg">{restaurant.name}</h3>
 									<p className="text-sm text-muted-foreground">
 										{restaurant.cuisine} | {restaurant.address?.['addr:street'] || ""}
+										{userLocation && restaurant.lat && restaurant.lon && (
+											<span className="ml-2 text-xs text-gray-400">
+												{getDistance(userLocation.lat, userLocation.lng, restaurant.lat, restaurant.lon).toFixed(2)} km
+											</span>
+										)}
 									</p>
 									<div className="flex justify-between items-center mt-3">
-										<Button size="sm">Details</Button>
+										{restaurant.price_level && (
+											<span className="text-xs text-gray-500">
+												Price: {restaurant.price_level}
+											</span>
+										)}
+										{restaurant.rating && (
+											<span className="text-xs text-yellow-600">
+												Rating: {restaurant.rating}
+											</span>
+										)}
+										<Button size="sm" onClick={() => setSelectedRestaurant(restaurant)}>Details</Button>
 									</div>
 								</Card>
 							))}
 							{!loading && results.length === 0 && <p>No results found.</p>}
 						</div>
+					)}
+					{selectedRestaurant && (
+						<RestaurantDetails restaurant={selectedRestaurant} onClose={() => setSelectedRestaurant(null)} />
 					)}
 				</div>
 			</div>

@@ -287,7 +287,11 @@ class PlacesAPIClient:
     
     def _get_place_type(self,tags: Dict[str,str]):
         """determine the main features of place from tags, returns Dict[str,str]"""
-        core_features=['cuisine','amenity','name','website','indoor_seating','outdoor_seating','indoor_seating','wheelchair','takeaway']
+        core_features=[
+            'cuisine','amenity','name','website','indoor_seating','outdoor_seating',
+            'wheelchair','takeaway','reservation','bookable','price_level','rating',
+            'payment:credit_cards','payment:cash','diet:vegan','diet:vegetarian'
+        ]
         features={}
         for tag in core_features:
             if tag in tags:
@@ -387,16 +391,49 @@ class PlaceRecommender:
         return results
     
     def _clean_recommendations(self, results: List[Dict]):
-        """Preprocess results into readable format"""
+        """Preprocess results into readable format. Reverse geocoding is DISABLED for performance."""
         res=[]
-        #add wtv u want
-        for place in results:   
+        # geocoder = Geocoder()  # Not needed when reverse geocoding is disabled
+        print(f"[DEBUG] _clean_recommendations input count: {len(results)}")
+        if len(results) > 0:
+            print(f"[DEBUG] First input result: {results[0]}")
+        # REVERSE_GEOCODE_LIMIT = 3  # Not needed
+        for idx, place in enumerate(results):
+            print(f"[DEBUG] Raw place {idx}: {place}")
+            tags = place.get('type', {})
+            address = place.get('address', {})
+            price_level = tags.get('price_level') or place.get('price_level')
+            rating = tags.get('rating') or place.get('rating')
+            cuisine = tags.get('cuisine')
+            lat = place.get('lat')
+            lon = place.get('lon')
+            print(f"[DEBUG] Place {idx} lat/lon: {lat}, {lon}")
+            # Reverse geocoding is disabled for performance
+            # if idx < REVERSE_GEOCODE_LIMIT and (not address or not address.get('addr:street')) and lat and lon:
+            #     print(f"[DEBUG] Reverse geocoding for place {idx} at {lat}, {lon}")
+            #     reverse = geocoder.reverse_geocode(lat, lon)
+            #     print(f"[DEBUG] Reverse geocode result for place {idx}: {reverse}")
+            #     if reverse and 'address' in reverse:
+            #         address = {**address, **reverse['address']}
+            # Try to fetch missing cuisine using amenity type if possible (fallback)
+            if not cuisine:
+                cuisine = tags.get('amenity') or 'Missing cuisine detail'
             place_info = {
-                'name': place.get('name', 'Unknown'),
-                'cuisine': place.get('type', {}).get('cuisine', 'Not specified'),
+                'name': place.get('name', 'Missing name detail'),
+                'cuisine': cuisine,
                 'similarity_score': place.get('similarity_score', 0),
-                'address': place.get('address', {})}
+                'address': address,
+                'price_level': price_level if price_level else 'Missing price detail',
+                'rating': rating if rating else 'Missing rating detail',
+                'type': tags,  # include all tags for frontend filtering
+                'lat': lat,
+                'lon': lon,
+            }
+            print(f"[DEBUG] Cleaned recommendation {idx}: {place_info}")
             res.append(place_info)
+        print(f"[DEBUG] _clean_recommendations output count: {len(res)}")
+        if len(res) > 0:
+            print(f"[DEBUG] First output recommendation: {res[0]}")
         return res
     
 
