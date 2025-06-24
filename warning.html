@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>&#128065; You Are Being Watched</title>
+  <style>
+    body {
+    background-color: black;
+    color: red;
+    font-family: monospace;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;       /* Exactly viewport height */
+    overflow: hidden;    /* Prevent scroll */
+    margin: 0;
+}
+
+    .eye {
+    font-size: 10em;
+     color: red;
+     display: inline-block;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin: 0.5em 0;
+    }
+
+    .blink {
+      animation: blinker 1s linear infinite;
+    }
+
+
+
+    @keyframes blinker {
+      50% { opacity: 0; }
+    }
+
+    p {
+      font-size: 1.5em;
+      color: white;
+      margin: 0.3em 0;
+    }
+
+    #ip {
+      font-size: 2em;
+      color: #ff4444;
+      margin-top: 1em;
+    }
+
+    h2, h3, h4 {
+      color: orange;
+      text-align: center;
+      margin: 0.4em;
+    }
+
+    .eye-container {
+  margin-top: 1em;
+  animation: eye-blink 2.5s infinite;
+}
+
+@keyframes eye-blink {
+  0%, 100% { opacity: 1; transform: scaleY(1); }
+  45% { transform: scaleY(1); }
+  50% { transform: scaleY(0.1); opacity: 0.5; } /*blinking animation*/
+  55% { transform: scaleY(1); opacity: 1; }
+}
+
+  </style>
+</head>
+<body>
+  <div class="eye-container">
+  <span class="eye">&#128065</span> 
+</div>
+
+  <h1 class="blink">⚠️ YOU ARE BEING WATCHED ⚠️</h1>
+  <p>Your activity has been logged.</p>
+  <h2>Unauthorised probing of websites is punishable under Section 3 and 5 of the Computer Misuse Act of Singapore.</h2>
+  <h3>Violating Section 3 can result in a fine of up to 5,000 SGD or imprisonment of up to 2 years, or both.</h3>
+  <h4>Violating Section 5 can result in a fine of up to 10,000 SGD or imprisonment of up to 3 years, or both.</h4>
+  <p>YOU HAVE BEEN WARNED.</p>
+  <p>Close this tab immediately.</p>
+  <p>Any further action on your part will result in legal proceedings.</p>
+  
+  <div id="ip">Retrieving IP address...</div>
+
+  <script>
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('ip').innerText = `Your IP: ${data.ip}`;
+      })
+      .catch(() => {
+        document.getElementById('ip').innerText = 'IP retrieval failed.';
+      });let hasInteracted = false;
+
+// Push dummy state to trigger popstate on back navigation. This will be the third trick.
+  window.history.pushState({}, '', window.location.href);
+
+  window.addEventListener('popstate', function () {
+    window.location.href = "https://www.google.com";
+  });
+
+  setTimeout(() => {
+    triggerTrap(); // fake self-destruct after delay
+  }, 10000); // 5 seconds after interaction
+ 
+    
+
+//second trap. Spring a second page to make user jolt.
+   function triggerTrap() {
+  document.body.innerHTML = '';
+  document.body.style.backgroundColor = 'black';
+
+  const endMsg = document.createElement('h1');
+  endMsg.style.color = 'red';
+  endMsg.style.textAlign = 'center';
+  //endMsg.innerText = '⚠️ SESSION TERMINATED ⚠️';
+  endMsg.innerText = 'YOU MIGHT WANT TO START PRACTICING WALKING IN HANDCUFFS.';
+  document.body.appendChild(endMsg);
+
+  
+
+ /*disable user click actions*/
+  document.addEventListener("keydown", e => e.preventDefault());
+  document.addEventListener("contextmenu", e => e.preventDefault());
+  document.addEventListener("click", e => e.preventDefault());
+  //to eject them out of the site entirely if they try to click on the back arrow
+  //reference:https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
+//   window.addEventListener('popstate', function() {
+//    window.location.href = "https://www.google.com";
+//   });
+
+}
+
+  </script>
+</body>
+</html>
