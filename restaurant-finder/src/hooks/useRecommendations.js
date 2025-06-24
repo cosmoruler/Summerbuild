@@ -4,9 +4,12 @@ import { useState, useEffect } from "react";
  * Custom hook to fetch restaurant recommendations from the backend API.
  * @param {Object} userLocation - The user's location { lat, lng }.
  * @param {string} searchTerm - The user's search query.
+ * @param {Array} priceRange - [min, max] price range.
+ * @param {Array} ratingRange - [min, max] rating range.
+ * @param {boolean} bookable - Whether to filter for bookable places.
  * @returns {Object} { results, loading, error }
  */
-export default function useRecommendations(userLocation, searchTerm) {
+export default function useRecommendations(userLocation, searchTerm, priceRange, ratingRange, bookable) {
   // State to store the fetched recommendations
   const [results, setResults] = useState([]);
   // State to indicate loading status
@@ -20,11 +23,20 @@ export default function useRecommendations(userLocation, searchTerm) {
       setLoading(true);
       setError(null);
 
-      // Build the API URL with query parameters
-      const url = `http://localhost:8000/api/recommend?lat=${userLocation.lat}&lon=${userLocation.lng}&query=${encodeURIComponent(searchTerm || "")}`;
+      // Build query params
+      const params = new URLSearchParams({
+        lat: userLocation.lat,
+        lon: userLocation.lng,
+        query: searchTerm || "",
+        price_min: priceRange ? priceRange[0] : 1,
+        price_max: priceRange ? priceRange[1] : 5,
+        rating_min: ratingRange ? ratingRange[0] : 1,
+        rating_max: ratingRange ? ratingRange[1] : 6,
+        bookable: bookable ? "true" : "false"
+      });
 
       // Fetch recommendations from backend
-      fetch(url)
+      fetch(`http://localhost:8000/api/recommend?${params.toString()}`)
         .then((res) => {
           if (!res.ok) throw new Error("Failed to fetch recommendations");
           return res.json();
@@ -38,7 +50,7 @@ export default function useRecommendations(userLocation, searchTerm) {
           setLoading(false);
         });
     }
-  }, [userLocation, searchTerm]);
+  }, [userLocation, searchTerm, priceRange, ratingRange, bookable]);
 
   // Return the results, loading, and error states
   return { results, loading, error };

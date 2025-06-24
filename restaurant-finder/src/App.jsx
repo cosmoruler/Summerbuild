@@ -1,22 +1,16 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import RestaurantFinder from './components/RestaurantFinder.jsx';
 import useUserLocation from './useUserLocation.js';
-import LocationButton from './LocationButton.jsx'; // <-- adjust path if needed
+// import LocationButton from './LocationButton.jsx'; // No longer needed
 
 function App() {
+  // Call the hook only once here
   const userLocation = useUserLocation();
-
-  useEffect(() => {
-    if (userLocation) {
-      console.log("User location:", userLocation);
-    }
-  }, [userLocation]);
 
   return (
     <div>
-      <LocationButton />
-      <h1>Restaurant Finder 🍽️</h1>
-      <RestaurantFinder />
+      {/* Pass userLocation as a prop to RestaurantFinder */}
+      <RestaurantFinder userLocation={userLocation} />
     </div>
   );
 }

@@ -15,8 +15,15 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Singapore's expanded geographical bounds (SW and NE corners)
+const singaporeBounds = [
+  [1.2000, 103.6000], // Expanded Southwest
+  [1.4850, 104.1000], // Expanded Northeast
+];
+
 /**
  * Map component to display restaurant locations and user location.
+ * Restricts map to Singapore's geographical area.
  * @param {Object[]} restaurants - Array of restaurant objects with lat/lon.
  * @param {Object} userLocation - User's location { lat, lng }.
  */
@@ -31,7 +38,11 @@ export default function RestaurantMap({ restaurants, userLocation }) {
     <MapContainer
       center={center}
       zoom={15}
+      minZoom={11}
+      maxZoom={18}
       className="w-full h-80 sm:h-[400px] rounded-lg"
+      maxBounds={singaporeBounds}
+      maxBoundsViscosity={1.0} // Prevents panning outside Singapore
     >
       {/* OpenStreetMap tiles */}
       <TileLayer
