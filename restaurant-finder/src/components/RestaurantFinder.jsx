@@ -11,6 +11,7 @@ import RestaurantMap from './RestaurantMap';
 import ChoiceChipGroup from "@/components/ui/choicechips";
 import UserProfile from './UserProfile';
 import SaveRestaurantButton from './SaveRestaurantButton';
+import { createPortal } from 'react-dom';
 
 // Dummy Switch component for toggles (replace with your UI lib if available)
 function Switch({ checked, onCheckedChange, id }) {
@@ -51,7 +52,8 @@ export default function RestaurantFinder({ userLocation }) {
 	const [ratingRange, setRatingRange] = useState([1, 6]);
 	const [priceRange, setPriceRange] = useState([1, 5]);
 	const [bookable, setBookable] = useState(false);
-	const [showFilters, setShowFilters] = useState(false); // For mobile filter overlay
+	const [showFilters, setShowFilters] = useState(false); // Controls filter panel for both mobile and desktop
+	const [filtersCollapsed, setFiltersCollapsed] = useState(false); // For desktop collapse
 	const { results, loading, error } = useRecommendations(
 		userLocation,
 		searchTerm,
@@ -137,6 +139,45 @@ export default function RestaurantFinder({ userLocation }) {
 		}
 	}, [searchTerm, selectedFilters, priceRange, ratingRange, bookable]);
 
+	const getRestaurantId = (restaurant) => {
+		return restaurant.id ||
+			(restaurant.name && restaurant.lat && restaurant.lon
+				? `${restaurant.name}_${restaurant.lat}_${restaurant.lon}`
+				: null);
+	};
+
+	const handleToggleSave = async (restaurant) => {
+		if (!user) {
+			alert('Please sign in to save restaurants');
+			return;
+		}
+
+		const restaurantId = getRestaurantId(restaurant);
+		if (!restaurantId) {
+			alert('Cannot save: restaurant has no unique identifier.');
+			return;
+		}
+
+		setLoading(true);
+		try {
+			console.log('Saving restaurant:', restaurant);
+			if (isSaved) {
+				const { error } = await savedRestaurants.remove(user.id, restaurantId);
+				if (error) throw error;
+				setIsSaved(false);
+			} else {
+				const { error } = await savedRestaurants.add(user.id, { ...restaurant, id: restaurantId });
+				if (error) throw error;
+				setIsSaved(true);
+			}
+		} catch (error) {
+			console.error('Error toggling save:', error);
+			alert('Error saving restaurant. ' + (error?.message || 'Please try again.'));
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	return (
 		<div className="max-w-7xl mx-auto p-2 sm:p-4 w-full">
 			{/* Header with User Profile */}
@@ -149,7 +190,7 @@ export default function RestaurantFinder({ userLocation }) {
 			<div className="w-full max-w-2xl mx-auto mt-4 mb-2">
 				<div className="flex items-center bg-white rounded-2xl shadow px-4 py-2 w-full">
 					{/* Menu Icon */}
-					<button className="text-red-500 mr-2">
+					<button className="text-red-500 mr-2" onClick={() => setShowFilters(v => !v)} aria-label="Toggle filters">
 						<Menu size={24} />
 					</button>
 					{/* Search Input */}
@@ -204,185 +245,186 @@ export default function RestaurantFinder({ userLocation }) {
 
 			{/* Responsive layout: side-by-side on desktop, overlay on mobile */}
 			<div className="flex flex-col md:flex-row w-full h-[80vh] gap-4">
-				{/* Desktop Filter Panel */}
-				<div className="hidden md:block w-80 max-w-xs bg-white rounded-lg shadow-md p-4 overflow-y-auto h-full">
-					{/* Amenity Type */}
-					<div className="mb-6">
-						<h3 className="font-medium mb-2">Amenity Type</h3>
-						{amenityTypes.map(type => (
-							<div key={type} className="flex items-center mb-1">
-								<Checkbox
-									checked={selectedFilters.includes(type)}
-									onCheckedChange={() => toggleFilter(type)}
-									id={`amenity-${type}`}
-								/>
-								<label className="ml-2 text-sm" htmlFor={`amenity-${type}`}>{type}</label>
+				{/* Desktop Filter Panel (collapsible) */}
+				{showFilters && (
+					<div className="hidden md:block w-80 max-w-xs bg-white rounded-lg shadow-md p-4 overflow-y-auto h-full transition-all duration-300">
+						{/* Amenity Type */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Amenity Type</h3>
+							{amenityTypes.map(type => (
+								<div key={type} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(type)}
+										onCheckedChange={() => toggleFilter(type)}
+										id={`amenity-${type}`}
+									/>
+									<label className="ml-2 text-sm" htmlFor={`amenity-${type}`}>{type}</label>
+								</div>
+							))}
+						</div>
+						{/* Cuisine with Show more/less */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Cuisine</h3>
+							{cuisineList.map(cuisine => (
+								<div key={cuisine} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(cuisine)}
+										onCheckedChange={() => toggleFilter(cuisine)}
+										id={`cuisine-${cuisine}`}
+									/>
+									<label
+										className={`ml-2 text-sm ${selectedFilters.includes(cuisine) ? "text-orange-500" : ""}`}
+										htmlFor={`cuisine-${cuisine}`}
+									>
+										{cuisine} ({cuisineCounts[cuisine] || 0})
+									</label>
+								</div>
+							))}
+							<button
+								className="text-xs font-semibold text-blue-600 mt-1 flex items-center"
+								onClick={() => setShowAllCuisines(v => !v)}
+							>
+								{showAllCuisines ? (
+									<span className="mr-1">-</span>
+								) : (
+									<span className="mr-1">+</span>
+								)}
+								{showAllCuisines ? "Show less" : "Show more"}
+							</button>
+						</div>
+						{/* Dietary/Options */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Dietary/Options</h3>
+							{dietaryOptions.map(opt => (
+								<div key={opt} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(opt)}
+										onCheckedChange={() => toggleFilter(opt)}
+										id={`dietary-${opt}`}
+									/>
+									<label className="ml-2 text-sm" htmlFor={`dietary-${opt}`}>{opt}</label>
+								</div>
+							))}
+						</div>
+						{/* Seating/Features */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Seating/Features</h3>
+							{seatingFeatures.map(feat => (
+								<div key={feat} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(feat)}
+										onCheckedChange={() => toggleFilter(feat)}
+										id={`seating-${feat}`}
+									/>
+									<label className="ml-2 text-sm" htmlFor={`seating-${feat}`}>{feat}</label>
+								</div>
+							))}
+						</div>
+						{/* Payment */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Payment</h3>
+							{paymentOptions.map(pay => (
+								<div key={pay} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(pay)}
+										onCheckedChange={() => toggleFilter(pay)}
+										id={`payment-${pay}`}
+									/>
+									<label className="ml-2 text-sm" htmlFor={`payment-${pay}`}>{pay}</label>
+								</div>
+							))}
+						</div>
+						{/* Accessibility */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Accessibility</h3>
+							{accessibilityOptions.map(acc => (
+								<div key={acc} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(acc)}
+										onCheckedChange={() => toggleFilter(acc)}
+										id={`accessibility-${acc}`}
+									/>
+									<label className="ml-2 text-sm" htmlFor={`accessibility-${acc}`}>{acc}</label>
+								</div>
+							))}
+						</div>
+						{/* Price Level (slider) */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Restaurant Price</h3>
+							<Slider
+								min={1}
+								max={5}
+								step={1}
+								value={priceRange}
+								onValueChange={setPriceRange}
+							/>
+							<div className="flex justify-between text-xs mt-1">
+								<span>$</span>
+								<span>$$</span>
+								<span>$$$</span>
+								<span>$$$$</span>
+								<span>$$$$$</span>
 							</div>
-						))}
-					</div>
-					{/* Cuisine with Show more/less */}
-					<div className="mb-6">
-						<h3 className="font-medium mb-2">Cuisine</h3>
-						{cuisineList.map(cuisine => (
-							<div key={cuisine} className="flex items-center mb-1">
-								<Checkbox
-									checked={selectedFilters.includes(cuisine)}
-									onCheckedChange={() => toggleFilter(cuisine)}
-									id={`cuisine-${cuisine}`}
-								/>
-								<label
-									className={`ml-2 text-sm ${selectedFilters.includes(cuisine) ? "text-orange-500" : ""}`}
-									htmlFor={`cuisine-${cuisine}`}
-								>
-									{cuisine} ({cuisineCounts[cuisine] || 0})
-								</label>
+						</div>
+						{/* Review Score (slider) */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Review score</h3>
+							<Slider
+								min={1}
+								max={6}
+								step={1}
+								value={ratingRange}
+								onValueChange={setRatingRange}
+							/>
+							<div className="flex justify-between text-xs mt-1">
+								{[1, 2, 3, 4, 5, 6].map((n) => (
+									<span key={n}>{n}</span>
+								))}
 							</div>
-						))}
-						<button
-							className="text-xs font-semibold text-blue-600 mt-1 flex items-center"
-							onClick={() => setShowAllCuisines(v => !v)}
-						>
-							{showAllCuisines ? (
-								<span className="mr-1">-</span>
-							) : (
-								<span className="mr-1">+</span>
-							)}
-							{showAllCuisines ? "Show less" : "Show more"}
-						</button>
-					</div>
-					{/* Dietary/Options */}
-					<div className="mb-6">
-						<h3 className="font-medium mb-2">Dietary/Options</h3>
-						{dietaryOptions.map(opt => (
-							<div key={opt} className="flex items-center mb-1">
-								<Checkbox
-									checked={selectedFilters.includes(opt)}
-									onCheckedChange={() => toggleFilter(opt)}
-									id={`dietary-${opt}`}
-								/>
-								<label className="ml-2 text-sm" htmlFor={`dietary-${opt}`}>{opt}</label>
-							</div>
-						))}
-					</div>
-					{/* Seating/Features */}
-					<div className="mb-6">
-						<h3 className="font-medium mb-2">Seating/Features</h3>
-						{seatingFeatures.map(feat => (
-							<div key={feat} className="flex items-center mb-1">
-								<Checkbox
-									checked={selectedFilters.includes(feat)}
-									onCheckedChange={() => toggleFilter(feat)}
-									id={`seating-${feat}`}
-								/>
-								<label className="ml-2 text-sm" htmlFor={`seating-${feat}`}>{feat}</label>
-							</div>
-						))}
-					</div>
-					{/* Payment */}
-					<div className="mb-6">
-						<h3 className="font-medium mb-2">Payment</h3>
-						{paymentOptions.map(pay => (
-							<div key={pay} className="flex items-center mb-1">
-								<Checkbox
-									checked={selectedFilters.includes(pay)}
-									onCheckedChange={() => toggleFilter(pay)}
-									id={`payment-${pay}`}
-								/>
-								<label className="ml-2 text-sm" htmlFor={`payment-${pay}`}>{pay}</label>
-							</div>
-						))}
-					</div>
-					{/* Accessibility */}
-					<div className="mb-6">
-						<h3 className="font-medium mb-2">Accessibility</h3>
-						{accessibilityOptions.map(acc => (
-							<div key={acc} className="flex items-center mb-1">
-								<Checkbox
-									checked={selectedFilters.includes(acc)}
-									onCheckedChange={() => toggleFilter(acc)}
-									id={`accessibility-${acc}`}
-								/>
-								<label className="ml-2 text-sm" htmlFor={`accessibility-${acc}`}>{acc}</label>
-							</div>
-						))}
-					</div>
-					{/* Price Level (slider) */}
-					{/* <div className="mb-6">
-						<h3 className="font-medium mb-2">Restaurant Price</h3>
-						<Slider
-							min={1}
-							max={5}
-							step={1}
-							value={priceRange}
-							onValueChange={setPriceRange}
+						</div>
+						<ChoiceChipGroup
+						  label="Price Level"
+						  options={["$", "$$", "$$$", "$$$$", "$$$$$"]}
+						  selected={priceValue}
+						  onChange={setPriceValue}
 						/>
-						<div className="flex justify-between text-xs mt-1">
-							<span>$</span>
-							<span>$$</span>
-							<span>$$$</span>
-							<span>$$$$</span>
-							<span>$$$$$</span>
+						
+						<ChoiceChipGroup
+						  label="Review Score"
+						  options={[1, 2, 3, 4, 5, 6]}
+						  selected={reviewScore}
+						  onChange={setReviewScore}
+						/>
+
+						{/* Bookable Toggle **/}
+						<div className="flex items-center mb-4">
+							<Switch
+								checked={bookable}
+								onCheckedChange={setBookable}
+								id="bookable"
+							/>
+							<label className="ml-2 text-sm font-medium">Bookable online</label>
+						</div>
+						{/* Others */}
+						<div className="mb-4">
+							<h3 className="font-medium mb-2">Others</h3>
+							{otherOptions.map(opt => (
+								<div key={opt} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(opt)}
+										onCheckedChange={() => toggleFilter(opt)}
+										id={`other-${opt}`}
+									/>
+									<label className="ml-2 text-sm" htmlFor={`other-${opt}`}>{opt}</label>
+								</div>
+							))}
 						</div>
 					</div>
-					 {/* Review Score (slider) */}
+				)}
 
-					{/* //</div><div className="mb-6">
-					// 	<h3 className="font-medium mb-2">Review score</h3>
-					// 	<Slider
-					// 		min={1}
-					// 		max={6}
-					// 		step={1}
-					// 		value={ratingRange}
-					// 		onValueChange={setRatingRange}
-					// 	/>
-					// 	<div className="flex justify-between text-xs mt-1">
-					// 		{[1, 2, 3, 4, 5, 6].map((n) => (
-					// 			<span key={n}>{n}</span>
-					// 		))}
-					// 	</div>
-					// </div>  */}
-					<ChoiceChipGroup
-					  label="Price Level"
-					  options={["$", "$$", "$$$", "$$$$", "$$$$$"]}
-					  selected={priceValue}
-					  onChange={setPriceValue}
-					/>
-					
-					<ChoiceChipGroup
-					  label="Review Score"
-					  options={[1, 2, 3, 4, 5, 6]}
-					  selected={reviewScore}
-					  onChange={setReviewScore}
-					/>
-
-					{/* Bookable Toggle **/}
-
-					<div className="flex items-center mb-4">
-						<Switch
-							checked={bookable}
-							onCheckedChange={setBookable}
-							id="bookable"
-						/>
-						<label className="ml-2 text-sm font-medium">Bookable online</label>
-					</div>
-					{/* Others */}
-					<div className="mb-4">
-						<h3 className="font-medium mb-2">Others</h3>
-						{otherOptions.map(opt => (
-							<div key={opt} className="flex items-center mb-1">
-								<Checkbox
-									checked={selectedFilters.includes(opt)}
-									onCheckedChange={() => toggleFilter(opt)}
-									id={`other-${opt}`}
-								/>
-								<label className="ml-2 text-sm" htmlFor={`other-${opt}`}>{opt}</label>
-							</div>
-						))}
-					</div>
-				</div>
 				{/* Mobile Filter Overlay */}
-				{showFilters && (
-					<div className="fixed inset-0 bg-black bg-opacity-40 z-30 flex justify-center items-start">
+				{showFilters && createPortal(
+					<div className="fixed inset-0 bg-black bg-opacity-40 z-[9999] flex justify-center items-start md:hidden">
 						<div className="bg-white rounded-lg shadow-md p-4 w-full max-w-xs mt-8 overflow-y-auto h-[80vh] relative">
 							<button
 								className="absolute top-2 right-2 text-xl"
@@ -491,7 +533,7 @@ export default function RestaurantFinder({ userLocation }) {
 								))}
 							</div>
 							{/* Price Level (slider) */}
-							{/* <div className="mb-6">
+							<div className="mb-6">
 								<h3 className="font-medium mb-2">Restaurant Price</h3>
 								<Slider
 									min={1}
@@ -507,9 +549,9 @@ export default function RestaurantFinder({ userLocation }) {
 									<span>$$$$</span>
 									<span>$$$$$</span>
 								</div>
-							</div> */}
+							</div>
 							{/* Review Score (slider) */}
-							{/* <div className="mb-6">
+							<div className="mb-6">
 								<h3 className="font-medium mb-2">Review score</h3>
 								<Slider
 									min={1}
@@ -523,8 +565,7 @@ export default function RestaurantFinder({ userLocation }) {
 										<span key={n}>{n}</span>
 									))}
 								</div>
-							</div> */}
-
+							</div>
 							<ChoiceChipGroup
 							  label="Price Level"
 							  options={["$", "$$", "$$$", "$$$$", "$$$$$"]}
@@ -562,7 +603,8 @@ export default function RestaurantFinder({ userLocation }) {
 								))}
 							</div>
 						</div>
-					</div>
+					</div>,
+					document.body
 				)}
 				{/* Main Content (Map/List) */}
 				<div className="flex-1 h-full relative">
@@ -623,7 +665,8 @@ export default function RestaurantFinder({ userLocation }) {
 										{/* Add more icons for features like outdoor seating, etc. */}
 										<span className="ml-auto">{restaurant.distance ? `${restaurant.distance} mi` : ''}</span>
 									</div>
-									<div className="flex justify-end mt-2">
+									<div className="flex justify-between items-center mt-2">
+										<SaveRestaurantButton restaurant={restaurant} />
 										<Button size="sm" variant="outline">Details</Button>
 									</div>
 								</Card>

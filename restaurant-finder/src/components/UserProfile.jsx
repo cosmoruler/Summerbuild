@@ -1,19 +1,37 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { savedRestaurants } from '../lib/supabase'
 import { LogOut, User, Heart, ChevronDown, MapPin, Star, DollarSign } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 const UserProfile = () => {
   const { user, signOut } = useAuth()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [savedRestaurantsList, setSavedRestaurantsList] = useState([])
   const [loading, setLoading] = useState(false)
+  const buttonRef = useRef(null)
+  const [dropdownStyle, setDropdownStyle] = useState({})
 
   useEffect(() => {
     if (user) {
       loadSavedRestaurants()
     }
   }, [user])
+
+  useEffect(() => {
+    if (isDropdownOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setDropdownStyle({
+        position: 'absolute',
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.right - 320 + window.scrollX, // 320px = dropdown width
+        zIndex: 9999,
+        minWidth: 320,
+        maxWidth: 360,
+      })
+    }
+  }, [isDropdownOpen])
 
   const loadSavedRestaurants = async () => {
     setLoading(true)
@@ -43,8 +61,11 @@ const UserProfile = () => {
     <div className="relative">
       {/* User Avatar Button */}
       <button
+        ref={buttonRef}
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         className="flex items-center space-x-2 bg-white rounded-full p-2 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
+        aria-haspopup="true"
+        aria-expanded={isDropdownOpen}
       >
         <div className="h-8 w-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
           <span className="text-white text-sm font-medium">
@@ -57,17 +78,23 @@ const UserProfile = () => {
         <ChevronDown className="h-4 w-4 text-gray-500" />
       </button>
 
-      {/* Dropdown Menu */}
-      {isDropdownOpen && (
+      {/* Dropdown Menu in Portal */}
+      {isDropdownOpen && createPortal(
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0 z-[9998]"
+            style={{ background: 'transparent' }}
             onClick={() => setIsDropdownOpen(false)}
           />
-          
           {/* Dropdown Content */}
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-20 max-h-96 overflow-hidden">
+          <div
+            className="bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-hidden"
+            style={dropdownStyle}
+            tabIndex={-1}
+            role="menu"
+            aria-label="User menu"
+          >
             {/* User Info */}
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center space-x-3">
@@ -87,14 +114,13 @@ const UserProfile = () => {
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-gray-900 flex items-center">
-                  <Heart className="h-4 w-4 mr-2 text-red-500" />
+                  <span className="mr-2"><Heart className="h-4 w-4 text-red-500" /></span>
                   Saved Restaurants
                 </h3>
                 <span className="text-sm text-gray-500">
                   {savedRestaurantsList.length}
                 </span>
               </div>
-              
               {loading ? (
                 <div className="text-center py-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500 mx-auto"></div>
@@ -142,11 +168,10 @@ const UserProfile = () => {
 
             {/* Menu Items */}
             <div className="py-2">
-              <button className="w-full flex items-center space-x-3 px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors duration-150">
+              <Link to="/profile" className="w-full flex items-center space-x-3 px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors duration-150">
                 <User className="h-4 w-4" />
                 <span>Profile</span>
-              </button>
-              
+              </Link>
               <div className="border-t border-gray-100 mt-2 pt-2">
                 <button
                   onClick={handleSignOut}
@@ -158,7 +183,8 @@ const UserProfile = () => {
               </div>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   )

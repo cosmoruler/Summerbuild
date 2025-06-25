@@ -14,40 +14,56 @@ const SaveRestaurantButton = ({ restaurant }) => {
     }
   }, [user, restaurant])
 
+  function getRestaurantId(restaurant) {
+    return (
+      restaurant.id ||
+      (restaurant.name && restaurant.lat && restaurant.lon
+        ? `${restaurant.name}_${restaurant.lat}_${restaurant.lon}`
+        : null)
+    );
+  }
+
   const checkIfSaved = async () => {
     try {
-      const { isSaved: saved, error } = await savedRestaurants.isSaved(user.id, restaurant.id)
-      if (error) throw error
-      setIsSaved(saved)
+      const restaurantId = getRestaurantId(restaurant);
+      if (!restaurantId) return setIsSaved(false);
+      const { isSaved: saved, error } = await savedRestaurants.isSaved(user.id, restaurantId);
+      if (error) throw error;
+      setIsSaved(saved);
     } catch (error) {
-      console.error('Error checking if restaurant is saved:', error)
+      console.error('Error checking if restaurant is saved:', error);
     }
   }
 
   const handleToggleSave = async () => {
     if (!user) {
-      alert('Please sign in to save restaurants')
-      return
+      alert('Please sign in to save restaurants');
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
+      const restaurantId = getRestaurantId(restaurant);
+      if (!restaurantId) {
+        alert('Cannot save: restaurant has no unique identifier.');
+        return;
+      }
       if (isSaved) {
         // Remove from saved
-        const { error } = await savedRestaurants.remove(user.id, restaurant.id)
-        if (error) throw error
-        setIsSaved(false)
+        const { error } = await savedRestaurants.remove(user.id, restaurantId);
+        if (error) throw error;
+        setIsSaved(false);
       } else {
         // Add to saved
-        const { error } = await savedRestaurants.add(user.id, restaurant)
-        if (error) throw error
-        setIsSaved(true)
+        const { error } = await savedRestaurants.add(user.id, { ...restaurant, id: restaurantId });
+        if (error) throw error;
+        setIsSaved(true);
       }
     } catch (error) {
-      console.error('Error toggling save:', error)
-      alert('Error saving restaurant. Please try again.')
+      console.error('Error toggling save:', error);
+      alert('Error saving restaurant. Please try again.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 

@@ -57,12 +57,23 @@ export const savedRestaurants = {
 
   // Add a restaurant to saved list
   add: async (userId, restaurant) => {
+    // Ensure restaurant_id is always present and unique
+    const restaurant_id =
+      restaurant.id ||
+      (restaurant.name && restaurant.lat && restaurant.lon
+        ? `${restaurant.name}_${restaurant.lat}_${restaurant.lon}`
+        : null);
+
+    if (!restaurant_id) {
+      throw new Error("Cannot save: restaurant has no unique identifier.");
+    }
+
     const { data, error } = await supabase
       .from('saved_restaurants')
       .insert([
         {
           user_id: userId,
-          restaurant_id: restaurant.id,
+          restaurant_id, // use the generated id
           name: restaurant.name,
           cuisine: restaurant.cuisine,
           address: restaurant.address,
@@ -76,9 +87,9 @@ export const savedRestaurants = {
           tags: restaurant.tags
         }
       ])
-      .select()
-    
-    return { data, error }
+      .select();
+
+    return { data, error };
   },
 
   // Remove a restaurant from saved list
@@ -103,4 +114,13 @@ export const savedRestaurants = {
     
     return { isSaved: !!data, error }
   }
+}
+
+function getRestaurantId(restaurant) {
+  return (
+    restaurant.id ||
+    (restaurant.name && restaurant.lat && restaurant.lon
+      ? `${restaurant.name}_${restaurant.lat}_${restaurant.lon}`
+      : null)
+  );
 } 

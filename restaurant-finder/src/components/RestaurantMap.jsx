@@ -3,6 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import SaveRestaurantButton from './SaveRestaurantButton';
 
 // Fix for default marker icon issues in many setups
 // This ensures the marker icons display correctly
@@ -100,7 +101,10 @@ export default function RestaurantMap({ restaurants, userLocation, selectedPlace
                   <span className="ml-1 font-medium text-gray-800">{place.rating || 'N/A'}</span>
                 </div>
                 <div className="text-xs text-gray-500 mb-1">{place.cuisine}</div>
-                <Button size="sm" variant="outline">Details</Button>
+                <div className="flex items-center gap-2 mt-2">
+                  <SaveRestaurantButton restaurant={place} />
+                  <Button size="sm" variant="outline">Details</Button>
+                </div>
               </div>
             </Popup>
           </Marker>

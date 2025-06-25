@@ -1,9 +1,10 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import RestaurantFinder from './components/RestaurantFinder.jsx';
 import AuthPage from './components/AuthPage.jsx';
+import ProfilePage from './components/ProfilePage.jsx';
 import useUserLocation from './useUserLocation.js';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
-// import LocationButton from './LocationButton.jsx'; // No longer needed
 
 // Component that handles the conditional rendering
 function AppContent() {
@@ -25,14 +26,22 @@ function AppContent() {
     return <AuthPage />;
   }
 
-  return <RestaurantFinder userLocation={userLocation} />;
+  return (
+    <Routes>
+      <Route path="/" element={<RestaurantFinder userLocation={userLocation} />} />
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="*" element={<div className="p-8 text-center">Page not found.</div>} />
+    </Routes>
+  );
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
   );
 }
 
