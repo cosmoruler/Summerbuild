@@ -246,6 +246,65 @@ class PlacesAPIClient:
                 except:
                     print("Could not decode error response")
             return []
+        
+    def _build_sg_query(self,places_type: List[str]= None,limit: int= 50):
+        if not places_type:
+            places_type=["amenity=restaurant", "amenity=cafe"]
+        # Format: (min_lat, min_lon, max_lat, max_lon)
+        singapore_bbox= (1.1496, 103.5940, 1.4784, 104.0945)
+
+        queries = []
+        for place in places_type:
+            if '=' in place:
+                k, v = place.split('=', 1)
+                tag_filter = f'["{k}"="{v}"]'
+            else:
+                tag_filter = f'["amenity"="{place}"]'  # Default to amenity if no key specified
+            
+            queries.append(f"""
+            node{tag_filter}({singapore_bbox[0]},{singapore_bbox[1]},{singapore_bbox[2]},{singapore_bbox[3]});
+            way{tag_filter}({singapore_bbox[0]},{singapore_bbox[1]},{singapore_bbox[2]},{singapore_bbox[3]});
+            relation{tag_filter}({singapore_bbox[0]},{singapore_bbox[1]},{singapore_bbox[2]},{singapore_bbox[3]});
+            """)
+        
+        # Combine all queries with union
+        query_parts = [
+            "[out:json][timeout:60];",  # Increased timeout for larger query
+            "(",
+            *queries,
+            ");",
+            f"out body {limit};",
+            ">;",
+            "out skel qt;"
+        ]
+        
+        return "\n".join(query_parts)    
+
+
+    def search_all_singapore(self, places_type: List[str] = None, limit: int = 50):
+        """Search for places across all of Singapore"""
+        query = self._build_sg_query(places_type, limit)
+        
+        try:
+            response = requests.post(
+                self.overpass_endpoint,
+                data=query,
+                headers={'Content-Type': 'text/plain'}
+            )
+            response.raise_for_status()
+            data = response.json()
+            if 'elements' not in data:
+                print("No elements found in response")
+                return []
+            return self._process_elements(data['elements'])
+        except Exception as e:
+            print(f'Error with Overpass API: {e}')
+            if hasattr(e, 'response') and e.response is not None:
+                try:
+                    print(f'Response: {e.response.text}')
+                except:
+                    print("Could not decode error response")
+            return []    
 
 
 
@@ -409,12 +468,25 @@ if __name__ == "__main__":
     #test_geocoder()
     #test_places_api_client()
     #example usage
-    client=PlacesAPIClient()
-    places=client.search_nearby("Marina Bay Sands", radius=3000, places_type=["amenity=restaurant", "amenity=cafe"], limit=25) 
-    recommender=PlaceRecommender()
-    raw_recommendations=recommender.get_recommendations(places, query="I'm looking for a seafood restaurant with outdoor seating", top_n=3) 
-    recommendations=recommender._clean_recommendations(raw_recommendations)
-    print(recommendations)
+    #client=PlacesAPIClient()
+    #places=client.search_nearby("Marina Bay Sands", radius=3000, places_type=["amenity=restaurant", "amenity=cafe"], limit=25) 
+    #recommender=PlaceRecommender()
+    #raw_recommendations=recommender.get_recommendations(places, query="I'm looking for a seafood restaurant with outdoor seating", top_n=3) 
+    #recommendations=recommender._clean_recommendations(raw_recommendations)
+    #print(recommendations)
     #output
     #[{'name': 'Red ahous', 'cuisine': 'seafood', 'similarity_score': 0.5781137943267822, 'address': {'name': 'Red ahous'}}, {'name': 'TungLok Seafood', 'cuisine': 'seafood', 'similarity_score': 0.5748628377914429, 'address': {'addr:street': 'Marina Gardens Drive', 'addr:housenumber': '18', 'addr:postcode': '018593', 'addr:city': 'Singapore', 'name': 'TungLok Seafood'}}, {'name': 'Jumbo Seafood', 'cuisine': 'seafood', 'similarity_score': 0.5634016394615173, 'address': {'addr:street': 'Upper Circular Road', 'addr:housenumber': '20', 'addr:postcode': '058416', 'addr:city': 'Singapore', 'name': 'Jumbo Seafood'}}]
+    
+    
+    #sg case: search for restaurant and cafes ALL of sg
+    client=PlacesAPIClient()
+    places=client.search_all_singapore(places_type=["amenity=restaurant", "amenity=cafe"], limit=25) 
+    #places return List[Dict]
 
+     #can even apply my algo to all of sg too
+    recommender=PlaceRecommender()
+    #CHANGE TOP_N ACCORDINGLY !!
+    raw_recommendations=recommender.get_recommendations(places, query="I'm looking for a seafood restaurant with outdoor seating", top_n=3) 
+    recommendations=recommender._clean_recommendations(raw_recommendations)
+
+    #print(places)
