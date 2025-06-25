@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Filter, Menu, Search, X } from "lucide-react";
 import useRecommendations from "../hooks/useRecommendations"; // Import the custom hook
 import RestaurantMap from './RestaurantMap';
-
+import ChoiceChipGroup from "@/components/ui/choicechips";
 // Dummy Switch component for toggles (replace with your UI lib if available)
 function Switch({ checked, onCheckedChange, id }) {
 	return (
@@ -59,6 +59,8 @@ export default function RestaurantFinder({ userLocation }) {
 	const [selectedPlace, setSelectedPlace] = useState(null);
 	const [searchPerformed, setSearchPerformed] = useState(false);
 	const autoSearchedRef = useRef(false);
+	const [priceValue, setPriceValue] = useState("$");
+    const [reviewScore, setReviewScore] = useState(1);
 
 	// Count the number of restaurants for each cuisine in the current results
 	const cuisineCounts = results.reduce((acc, restaurant) => {
@@ -296,7 +298,7 @@ export default function RestaurantFinder({ userLocation }) {
 						))}
 					</div>
 					{/* Price Level (slider) */}
-					<div className="mb-6">
+					{/* <div className="mb-6">
 						<h3 className="font-medium mb-2">Restaurant Price</h3>
 						<Slider
 							min={1}
@@ -313,23 +315,39 @@ export default function RestaurantFinder({ userLocation }) {
 							<span>$$$$$</span>
 						</div>
 					</div>
-					{/* Review Score (slider) */}
-					<div className="mb-6">
-						<h3 className="font-medium mb-2">Review score</h3>
-						<Slider
-							min={1}
-							max={6}
-							step={1}
-							value={ratingRange}
-							onValueChange={setRatingRange}
-						/>
-						<div className="flex justify-between text-xs mt-1">
-							{[1, 2, 3, 4, 5, 6].map((n) => (
-								<span key={n}>{n}</span>
-							))}
-						</div>
-					</div>
-					{/* Bookable Toggle */}
+					 {/* Review Score (slider) */}
+
+					{/* //</div><div className="mb-6">
+					// 	<h3 className="font-medium mb-2">Review score</h3>
+					// 	<Slider
+					// 		min={1}
+					// 		max={6}
+					// 		step={1}
+					// 		value={ratingRange}
+					// 		onValueChange={setRatingRange}
+					// 	/>
+					// 	<div className="flex justify-between text-xs mt-1">
+					// 		{[1, 2, 3, 4, 5, 6].map((n) => (
+					// 			<span key={n}>{n}</span>
+					// 		))}
+					// 	</div>
+					// </div>  */}
+					<ChoiceChipGroup
+					  label="Price Level"
+					  options={["$", "$$", "$$$", "$$$$", "$$$$$"]}
+					  selected={priceValue}
+					  onChange={setPriceValue}
+					/>
+					
+					<ChoiceChipGroup
+					  label="Review Score"
+					  options={[1, 2, 3, 4, 5, 6]}
+					  selected={reviewScore}
+					  onChange={setReviewScore}
+					/>
+
+					{/* Bookable Toggle **/}
+
 					<div className="flex items-center mb-4">
 						<Switch
 							checked={bookable}
@@ -464,7 +482,7 @@ export default function RestaurantFinder({ userLocation }) {
 								))}
 							</div>
 							{/* Price Level (slider) */}
-							<div className="mb-6">
+							{/* <div className="mb-6">
 								<h3 className="font-medium mb-2">Restaurant Price</h3>
 								<Slider
 									min={1}
@@ -480,9 +498,9 @@ export default function RestaurantFinder({ userLocation }) {
 									<span>$$$$</span>
 									<span>$$$$$</span>
 								</div>
-							</div>
+							</div> */}
 							{/* Review Score (slider) */}
-							<div className="mb-6">
+							{/* <div className="mb-6">
 								<h3 className="font-medium mb-2">Review score</h3>
 								<Slider
 									min={1}
@@ -496,7 +514,21 @@ export default function RestaurantFinder({ userLocation }) {
 										<span key={n}>{n}</span>
 									))}
 								</div>
-							</div>
+							</div> */}
+
+							<ChoiceChipGroup
+							  label="Price Level"
+							  options={["$", "$$", "$$$", "$$$$", "$$$$$"]}
+							  selected={priceValue}
+							  onChange={setPriceValue}
+							/>
+							
+							<ChoiceChipGroup
+							  label="Review Score"
+							  options={[1, 2, 3, 4, 5, 6]}
+							  selected={reviewScore}
+							  onChange={setReviewScore}
+							/>
 							{/* Bookable Toggle */}
 							<div className="flex items-center mb-4">
 								<Switch
