@@ -12,6 +12,9 @@ import ChoiceChipGroup from "@/components/ui/choicechips";
 import UserProfile from './UserProfile';
 import SaveRestaurantButton from './SaveRestaurantButton';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
+import { User } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 // Dummy Switch component for toggles (replace with your UI lib if available)
 function Switch({ checked, onCheckedChange, id }) {
@@ -45,6 +48,7 @@ const otherOptions = ["WiFi", "Kids Area", "Pet Friendly", "Live Music", "Organi
 const priceLevels = ["$", "$$", "$$$", "$$$$", "$$$$$"];
 
 export default function RestaurantFinder({ userLocation }) {
+	const { user } = useAuth();
 	const [view, setView] = useState("map");
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedFilters, setSelectedFilters] = useState([]); // All filter labels
@@ -66,6 +70,7 @@ export default function RestaurantFinder({ userLocation }) {
 	const autoSearchedRef = useRef(false);
 	const [priceValue, setPriceValue] = useState("$");
     const [reviewScore, setReviewScore] = useState(1);
+	const [isAdmin, setIsAdmin] = useState(false);
 
 	// Count the number of restaurants for each cuisine in the current results
 	const cuisineCounts = results.reduce((acc, restaurant) => {
@@ -177,6 +182,20 @@ export default function RestaurantFinder({ userLocation }) {
 			setLoading(false);
 		}
 	};
+
+	useEffect(() => {
+		const fetchProfile = async () => {
+			// Fetch the user's profile from Supabase
+			const { data, error } = await supabase
+				.from('profiles')
+				.select('is_admin')
+				.eq('id', user.id)
+				.single();
+			if (data && data.is_admin) setIsAdmin(true);
+			else setIsAdmin(false);
+		};
+		if (user) fetchProfile();
+	}, [user]);
 
 	return (
 		<div className="min-h-screen flex flex-col max-w-7xl mx-auto p-2 sm:p-4 w-full">
@@ -499,6 +518,15 @@ export default function RestaurantFinder({ userLocation }) {
 								</div>
 							))}
 						</div>
+						{isAdmin && (
+							<Link
+								to="/admin"
+								className="w-full flex items-center space-x-3 px-4 py-2 text-left text-blue-700 hover:bg-blue-50 transition-colors duration-150"
+							>
+								<User className="h-4 w-4" />
+								<span>Manage Users</span>
+							</Link>
+						)}
 					</div>
 				</div>,
 				document.body

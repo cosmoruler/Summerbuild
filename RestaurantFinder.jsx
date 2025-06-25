@@ -12,6 +12,7 @@ import RestaurantMap from './RestaurantMap';
 import NumberToggle from "@/components/ui/togglebutton";
 import ButtonGroupSelector from "@/components/ui/sliderbutton"
 import ChoiceChipGroup from "@/components/ui/choicechips";
+import { useAuth } from '../contexts/AuthContext';
 
 
 // Dummy Switch component for toggles (replace with your UI lib if available)
@@ -56,6 +57,7 @@ export default function RestaurantFinder({ userLocation }) {
 	const [showFilters, setShowFilters] = useState(false); // For mobile filter overlay
 	const [priceValue, setPriceValue] = useState("$");
     const [reviewScore, setReviewScore] = useState(1);
+	const { user } = useAuth();
 
 	const { results, loading, error } = useRecommendations(
 		userLocation,

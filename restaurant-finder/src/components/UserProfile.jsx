@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { savedRestaurants } from '../lib/supabase'
 import { LogOut, User, Heart, ChevronDown, MapPin, Star, DollarSign } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 
 const UserProfile = () => {
   const { user, signOut } = useAuth()
@@ -12,6 +13,7 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(false)
   const buttonRef = useRef(null)
   const [dropdownStyle, setDropdownStyle] = useState({})
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -36,6 +38,20 @@ const UserProfile = () => {
       })
     }
   }, [isDropdownOpen])
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      // Fetch the user's profile from Supabase
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single();
+      if (data && data.is_admin) setIsAdmin(true);
+      else setIsAdmin(false);
+    };
+    if (user) fetchProfile();
+  }, [user]);
 
   const loadSavedRestaurants = async () => {
     setLoading(true)
@@ -172,6 +188,15 @@ const UserProfile = () => {
 
             {/* Menu Items */}
             <div className="py-2">
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="w-full flex items-center space-x-3 px-4 py-2 text-left text-blue-700 hover:bg-blue-50 transition-colors duration-150"
+                >
+                  <User className="h-4 w-4" />
+                  <span>Manage Users</span>
+                </Link>
+              )}
               <Link to="/profile" className="w-full flex items-center space-x-3 px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors duration-150">
                 <User className="h-4 w-4" />
                 <span>Profile</span>

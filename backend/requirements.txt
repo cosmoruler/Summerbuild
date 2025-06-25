@@ -1,8 +1,21 @@
-#python dependencies
-fastapi #available at localhost:8000
+# Core web framework
+fastapi
+
+# ASGI server for FastAPI
 uvicorn
+
+# HTTP requests
 requests
+
+# Geocoding
 geopy
+
+# Semantic search and embeddings
 sentence-transformers
+
+# Machine learning utilities
 scikit-learn
 numpy
+
+# CORS middleware (already included with fastapi, but explicit for clarity)
+python-multipart
