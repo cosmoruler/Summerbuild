@@ -9,7 +9,6 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
-    "@appnest/readme": "^1.2.7",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6"
