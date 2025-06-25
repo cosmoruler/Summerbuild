@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Find restaurants near your location in Singapore" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <title>Restaurant Finder</title>
+
+  
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDMhI9HfNUU8bkTsQNXybVPkuwA-YSyigk&libraries=places"
+      defer
+    ></script>
+  <!-- Please uncomment this later. Springs the trap page when user inspects html, possibly for api keys.
+  </head>
+
+  <script>
+  (function () {
+    const threshold = 160; // Typical DevTools width/height
+    let detected = false;
+
+    function detectDevTools() {
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+      if ((widthThreshold || heightThreshold) && !detected) {
+        detected = true;
+        window.location.href = "/warning.html"; // Replace with your warning page
+      }
+    }
+
+    setInterval(detectDevTools, 1000); // Check every 1s
+  })();
+</script>
+-->
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
