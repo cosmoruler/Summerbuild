@@ -313,6 +313,196 @@ export default function RestaurantFinder({ userLocation }) {
 					</div>
 				)}
 			</div>
+
+			{/* Filter Overlay Portal */}
+			{showFilters && createPortal(
+				<div className="fixed inset-0 z-[9999] flex justify-center items-start md:items-center">
+					{/* Overlay background */}
+					<div
+						className="absolute inset-0 bg-black bg-opacity-40"
+						onClick={() => setShowFilters(false)}
+					/>
+					{/* Filter panel */}
+					<div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-xs md:max-w-md mt-20 md:mt-0 overflow-y-auto max-h-[90vh] z-10">
+						<button
+							className="absolute top-2 right-2 text-xl"
+							onClick={() => setShowFilters(false)}
+						>
+							&times;
+						</button>
+						{/* Amenity Type */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Amenity Type</h3>
+							{amenityTypes.map(type => (
+								<div key={type} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(type)}
+										onCheckedChange={() => toggleFilter(type)}
+										id={`amenity-${type}`}
+									/>
+									<label className="ml-2 text-sm" htmlFor={`amenity-${type}`}>{type}</label>
+								</div>
+							))}
+						</div>
+						{/* Cuisine with Show more/less */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Cuisine</h3>
+							{(showAllCuisines ? cuisineList : cuisineList.slice(0, 6)).map(cuisine => (
+								<div key={cuisine} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(cuisine)}
+										onCheckedChange={() => toggleFilter(cuisine)}
+										id={`cuisine-${cuisine}`}
+									/>
+									<label
+										className={`ml-2 text-sm ${selectedFilters.includes(cuisine) ? "text-orange-500" : ""}`}
+										htmlFor={`cuisine-${cuisine}`}
+									>
+										{cuisine} ({cuisineCounts[cuisine] || 0})
+									</label>
+								</div>
+							))}
+							<button
+								className="text-xs font-semibold text-blue-600 mt-1 flex items-center"
+								onClick={() => setShowAllCuisines(v => !v)}
+							>
+								{showAllCuisines ? (
+									<span className="mr-1">-</span>
+								) : (
+									<span className="mr-1">+</span>
+								)}
+								{showAllCuisines ? "Show less" : "Show more"}
+							</button>
+						</div>
+						{/* Dietary/Options */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Dietary/Options</h3>
+							{dietaryOptions.map(opt => (
+								<div key={opt} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(opt)}
+										onCheckedChange={() => toggleFilter(opt)}
+										id={`dietary-${opt}`}
+									/>
+									<label className="ml-2 text-sm" htmlFor={`dietary-${opt}`}>{opt}</label>
+								</div>
+							))}
+						</div>
+						{/* Seating/Features */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Seating/Features</h3>
+							{seatingFeatures.map(feat => (
+								<div key={feat} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(feat)}
+										onCheckedChange={() => toggleFilter(feat)}
+										id={`seating-${feat}`}
+									/>
+									<label className="ml-2 text-sm" htmlFor={`seating-${feat}`}>{feat}</label>
+								</div>
+							))}
+						</div>
+						{/* Payment */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Payment</h3>
+							{paymentOptions.map(pay => (
+								<div key={pay} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(pay)}
+										onCheckedChange={() => toggleFilter(pay)}
+										id={`payment-${pay}`}
+									/>
+									<label className="ml-2 text-sm" htmlFor={`payment-${pay}`}>{pay}</label>
+								</div>
+							))}
+						</div>
+						{/* Accessibility */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Accessibility</h3>
+							{accessibilityOptions.map(acc => (
+								<div key={acc} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(acc)}
+										onCheckedChange={() => toggleFilter(acc)}
+										id={`accessibility-${acc}`}
+									/>
+									<label className="ml-2 text-sm" htmlFor={`accessibility-${acc}`}>{acc}</label>
+								</div>
+							))}
+						</div>
+						{/* Price Level (slider) */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Restaurant Price</h3>
+							<Slider
+								min={1}
+								max={5}
+								step={1}
+								value={priceRange}
+								onValueChange={setPriceRange}
+							/>
+							<div className="flex justify-between text-xs mt-1">
+								<span>$</span>
+								<span>$$</span>
+								<span>$$$</span>
+								<span>$$$$</span>
+								<span>$$$$$</span>
+							</div>
+						</div>
+						{/* Review Score (slider) */}
+						<div className="mb-6">
+							<h3 className="font-medium mb-2">Review score</h3>
+							<Slider
+								min={1}
+								max={6}
+								step={1}
+								value={ratingRange}
+								onValueChange={setRatingRange}
+							/>
+							<div className="flex justify-between text-xs mt-1">
+								{[1, 2, 3, 4, 5, 6].map((n) => (
+									<span key={n}>{n}</span>
+								))}
+							</div>
+						</div>
+						<ChoiceChipGroup
+							label="Price Level"
+							options={["$", "$$", "$$$", "$$$$", "$$$$$"]}
+							selected={priceValue}
+							onChange={setPriceValue}
+						/>
+						<ChoiceChipGroup
+							label="Review Score"
+							options={[1, 2, 3, 4, 5, 6]}
+							selected={reviewScore}
+							onChange={setReviewScore}
+						/>
+						{/* Bookable Toggle */}
+						<div className="flex items-center mb-4">
+							<Switch
+								checked={bookable}
+								onCheckedChange={setBookable}
+								id="bookable"
+							/>
+							<label className="ml-2 text-sm font-medium">Bookable online</label>
+						</div>
+						{/* Others */}
+						<div className="mb-4">
+							<h3 className="font-medium mb-2">Others</h3>
+							{otherOptions.map(opt => (
+								<div key={opt} className="flex items-center mb-1">
+									<Checkbox
+										checked={selectedFilters.includes(opt)}
+										onCheckedChange={() => toggleFilter(opt)}
+										id={`other-${opt}`}
+									/>
+									<label className="ml-2 text-sm" htmlFor={`other-${opt}`}>{opt}</label>
+								</div>
+							))}
+						</div>
+					</div>
+				</div>,
+				document.body
+			)}
 		</div>
 	);
 }
