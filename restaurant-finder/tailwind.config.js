@@ -56,4 +56,10 @@ export default {
   	}
   },
   plugins: [require("tailwindcss-animate")],
+  //to enforce line clamp 2, where all info when too long,
+  //is squashed to 2 lines.
+  plugins: [
+  require('@tailwindcss/line-clamp')
+]
+
 }
