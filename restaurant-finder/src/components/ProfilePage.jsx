@@ -96,15 +96,6 @@ const ProfilePage = () => {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      {/* Home Button */}
-      <div className="mb-4 flex justify-end">
-        <Link to="/">
-          <Button variant="outline" className="flex items-center gap-2">
-            <Home className="h-4 w-4" />
-            Home
-          </Button>
-        </Link>
-      </div>
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

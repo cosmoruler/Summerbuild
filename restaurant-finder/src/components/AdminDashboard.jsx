@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 const ADMIN_SECRET = 'SummerBuild,2025'; // For dev only! Never expose in production.
 

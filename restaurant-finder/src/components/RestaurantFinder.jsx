@@ -201,12 +201,6 @@ export default function RestaurantFinder({ userLocation }) {
 
 	return (
 		<div className="min-h-screen flex flex-col max-w-7xl mx-auto p-2 sm:p-4 w-full">
-			{/* Header with User Profile */}
-			<div className="flex items-center justify-between mb-4">
-				<div className="flex-1" />
-				<UserProfile />
-			</div>
-
 			{/* Top Search Bar with Menu and Search Icons */}
 			<div className="w-full max-w-2xl mx-auto mt-4 mb-2">
 				<div className="flex items-center bg-white rounded-2xl shadow px-4 py-2 w-full">

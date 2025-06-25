@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 import AdminDashboard from './components/AdminDashboard.jsx';
 import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
+import UserProfile from './components/UserProfile';
+import { Link } from 'react-router-dom';
 
 function AdminRoute({ children }) {
   const { user } = useAuth();
@@ -78,10 +80,49 @@ function AppContent() {
   );
 }
 
+function AppHeader() {
+  const { user, signOut } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    async function checkAdmin() {
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single();
+        setIsAdmin(data?.is_admin);
+      } else {
+        setIsAdmin(false);
+      }
+    }
+    checkAdmin();
+  }, [user]);
+
+  return (
+    <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+        <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-orange-600">
+          <span role="img" aria-label="logo">🍽️</span> Restaurant Finder
+        </Link>
+        <nav className="flex items-center gap-4">
+          <Link to="/" className="text-gray-700 hover:text-orange-600 font-medium">Home</Link>
+          {user && <Link to="/profile" className="text-gray-700 hover:text-orange-600 font-medium">Profile</Link>}
+          {user && isAdmin && <Link to="/admin" className="text-gray-700 hover:text-orange-600 font-medium">Admin</Link>}
+          {user && <button onClick={signOut} className="text-red-600 hover:underline font-medium">Sign Out</button>}
+          {user && <UserProfile />}
+        </nav>
+      </div>
+    </header>
+  );
+}
+
 function App() {
   return (
     <Router>
       <AuthProvider>
+        <AppHeader />
         <AppContent />
       </AuthProvider>
     </Router>
