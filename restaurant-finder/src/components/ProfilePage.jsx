@@ -16,6 +16,9 @@ const ProfilePage = () => {
   useEffect(() => {
     if (user) {
       fetchSaved();
+      const handler = () => fetchSaved();
+      window.addEventListener('saved-restaurants-updated', handler);
+      return () => window.removeEventListener('saved-restaurants-updated', handler);
     }
   }, [user]);
 

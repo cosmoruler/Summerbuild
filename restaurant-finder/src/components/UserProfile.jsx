@@ -16,6 +16,10 @@ const UserProfile = () => {
   useEffect(() => {
     if (user) {
       loadSavedRestaurants()
+      // Listen for updates from anywhere in the app
+      const handler = () => loadSavedRestaurants()
+      window.addEventListener('saved-restaurants-updated', handler)
+      return () => window.removeEventListener('saved-restaurants-updated', handler)
     }
   }, [user])
 

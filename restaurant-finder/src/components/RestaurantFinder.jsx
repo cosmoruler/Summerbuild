@@ -179,7 +179,7 @@ export default function RestaurantFinder({ userLocation }) {
 	};
 
 	return (
-		<div className="max-w-7xl mx-auto p-2 sm:p-4 w-full">
+		<div className="min-h-screen flex flex-col max-w-7xl mx-auto p-2 sm:p-4 w-full">
 			{/* Header with User Profile */}
 			<div className="flex items-center justify-between mb-4">
 				<div className="flex-1" />
@@ -243,372 +243,10 @@ export default function RestaurantFinder({ userLocation }) {
 				</button>
 			</div>
 
-			{/* Responsive layout: side-by-side on desktop, overlay on mobile */}
-			<div className="flex flex-col md:flex-row w-full h-[80vh] gap-4">
-				{/* Desktop Filter Panel (collapsible) */}
-				{showFilters && (
-					<div className="hidden md:block w-80 max-w-xs bg-white rounded-lg shadow-md p-4 overflow-y-auto h-full transition-all duration-300">
-						{/* Amenity Type */}
-						<div className="mb-6">
-							<h3 className="font-medium mb-2">Amenity Type</h3>
-							{amenityTypes.map(type => (
-								<div key={type} className="flex items-center mb-1">
-									<Checkbox
-										checked={selectedFilters.includes(type)}
-										onCheckedChange={() => toggleFilter(type)}
-										id={`amenity-${type}`}
-									/>
-									<label className="ml-2 text-sm" htmlFor={`amenity-${type}`}>{type}</label>
-								</div>
-							))}
-						</div>
-						{/* Cuisine with Show more/less */}
-						<div className="mb-6">
-							<h3 className="font-medium mb-2">Cuisine</h3>
-							{cuisineList.map(cuisine => (
-								<div key={cuisine} className="flex items-center mb-1">
-									<Checkbox
-										checked={selectedFilters.includes(cuisine)}
-										onCheckedChange={() => toggleFilter(cuisine)}
-										id={`cuisine-${cuisine}`}
-									/>
-									<label
-										className={`ml-2 text-sm ${selectedFilters.includes(cuisine) ? "text-orange-500" : ""}`}
-										htmlFor={`cuisine-${cuisine}`}
-									>
-										{cuisine} ({cuisineCounts[cuisine] || 0})
-									</label>
-								</div>
-							))}
-							<button
-								className="text-xs font-semibold text-blue-600 mt-1 flex items-center"
-								onClick={() => setShowAllCuisines(v => !v)}
-							>
-								{showAllCuisines ? (
-									<span className="mr-1">-</span>
-								) : (
-									<span className="mr-1">+</span>
-								)}
-								{showAllCuisines ? "Show less" : "Show more"}
-							</button>
-						</div>
-						{/* Dietary/Options */}
-						<div className="mb-6">
-							<h3 className="font-medium mb-2">Dietary/Options</h3>
-							{dietaryOptions.map(opt => (
-								<div key={opt} className="flex items-center mb-1">
-									<Checkbox
-										checked={selectedFilters.includes(opt)}
-										onCheckedChange={() => toggleFilter(opt)}
-										id={`dietary-${opt}`}
-									/>
-									<label className="ml-2 text-sm" htmlFor={`dietary-${opt}`}>{opt}</label>
-								</div>
-							))}
-						</div>
-						{/* Seating/Features */}
-						<div className="mb-6">
-							<h3 className="font-medium mb-2">Seating/Features</h3>
-							{seatingFeatures.map(feat => (
-								<div key={feat} className="flex items-center mb-1">
-									<Checkbox
-										checked={selectedFilters.includes(feat)}
-										onCheckedChange={() => toggleFilter(feat)}
-										id={`seating-${feat}`}
-									/>
-									<label className="ml-2 text-sm" htmlFor={`seating-${feat}`}>{feat}</label>
-								</div>
-							))}
-						</div>
-						{/* Payment */}
-						<div className="mb-6">
-							<h3 className="font-medium mb-2">Payment</h3>
-							{paymentOptions.map(pay => (
-								<div key={pay} className="flex items-center mb-1">
-									<Checkbox
-										checked={selectedFilters.includes(pay)}
-										onCheckedChange={() => toggleFilter(pay)}
-										id={`payment-${pay}`}
-									/>
-									<label className="ml-2 text-sm" htmlFor={`payment-${pay}`}>{pay}</label>
-								</div>
-							))}
-						</div>
-						{/* Accessibility */}
-						<div className="mb-6">
-							<h3 className="font-medium mb-2">Accessibility</h3>
-							{accessibilityOptions.map(acc => (
-								<div key={acc} className="flex items-center mb-1">
-									<Checkbox
-										checked={selectedFilters.includes(acc)}
-										onCheckedChange={() => toggleFilter(acc)}
-										id={`accessibility-${acc}`}
-									/>
-									<label className="ml-2 text-sm" htmlFor={`accessibility-${acc}`}>{acc}</label>
-								</div>
-							))}
-						</div>
-						{/* Price Level (slider) */}
-						<div className="mb-6">
-							<h3 className="font-medium mb-2">Restaurant Price</h3>
-							<Slider
-								min={1}
-								max={5}
-								step={1}
-								value={priceRange}
-								onValueChange={setPriceRange}
-							/>
-							<div className="flex justify-between text-xs mt-1">
-								<span>$</span>
-								<span>$$</span>
-								<span>$$$</span>
-								<span>$$$$</span>
-								<span>$$$$$</span>
-							</div>
-						</div>
-						{/* Review Score (slider) */}
-						<div className="mb-6">
-							<h3 className="font-medium mb-2">Review score</h3>
-							<Slider
-								min={1}
-								max={6}
-								step={1}
-								value={ratingRange}
-								onValueChange={setRatingRange}
-							/>
-							<div className="flex justify-between text-xs mt-1">
-								{[1, 2, 3, 4, 5, 6].map((n) => (
-									<span key={n}>{n}</span>
-								))}
-							</div>
-						</div>
-						<ChoiceChipGroup
-						  label="Price Level"
-						  options={["$", "$$", "$$$", "$$$$", "$$$$$"]}
-						  selected={priceValue}
-						  onChange={setPriceValue}
-						/>
-						
-						<ChoiceChipGroup
-						  label="Review Score"
-						  options={[1, 2, 3, 4, 5, 6]}
-						  selected={reviewScore}
-						  onChange={setReviewScore}
-						/>
-
-						{/* Bookable Toggle **/}
-						<div className="flex items-center mb-4">
-							<Switch
-								checked={bookable}
-								onCheckedChange={setBookable}
-								id="bookable"
-							/>
-							<label className="ml-2 text-sm font-medium">Bookable online</label>
-						</div>
-						{/* Others */}
-						<div className="mb-4">
-							<h3 className="font-medium mb-2">Others</h3>
-							{otherOptions.map(opt => (
-								<div key={opt} className="flex items-center mb-1">
-									<Checkbox
-										checked={selectedFilters.includes(opt)}
-										onCheckedChange={() => toggleFilter(opt)}
-										id={`other-${opt}`}
-									/>
-									<label className="ml-2 text-sm" htmlFor={`other-${opt}`}>{opt}</label>
-								</div>
-							))}
-						</div>
-					</div>
-				)}
-
-				{/* Mobile Filter Overlay */}
-				{showFilters && createPortal(
-					<div className="fixed inset-0 bg-black bg-opacity-40 z-[9999] flex justify-center items-start md:hidden">
-						<div className="bg-white rounded-lg shadow-md p-4 w-full max-w-xs mt-8 overflow-y-auto h-[80vh] relative">
-							<button
-								className="absolute top-2 right-2 text-xl"
-								onClick={() => setShowFilters(false)}
-							>
-								&times;
-							</button>
-							{/* Amenity Type */}
-							<div className="mb-6">
-								<h3 className="font-medium mb-2">Amenity Type</h3>
-								{amenityTypes.map(type => (
-									<div key={type} className="flex items-center mb-1">
-										<Checkbox
-											checked={selectedFilters.includes(type)}
-											onCheckedChange={() => toggleFilter(type)}
-											id={`amenity-mobile-${type}`}
-										/>
-										<label className="ml-2 text-sm" htmlFor={`amenity-mobile-${type}`}>{type}</label>
-									</div>
-								))}
-							</div>
-							{/* Cuisine with Show more/less */}
-							<div className="mb-6">
-								<h3 className="font-medium mb-2">Cuisine</h3>
-								{cuisineList.map(cuisine => (
-									<div key={cuisine} className="flex items-center mb-1">
-										<Checkbox
-											checked={selectedFilters.includes(cuisine)}
-											onCheckedChange={() => toggleFilter(cuisine)}
-											id={`cuisine-mobile-${cuisine}`}
-										/>
-										<label
-											className={`ml-2 text-sm ${selectedFilters.includes(cuisine) ? "text-orange-500" : ""}`}
-											htmlFor={`cuisine-mobile-${cuisine}`}
-										>
-											{cuisine} ({cuisineCounts[cuisine] || 0})
-										</label>
-									</div>
-								))}
-								<button
-									className="text-xs font-semibold text-blue-600 mt-1 flex items-center"
-									onClick={() => setShowAllCuisines(v => !v)}
-								>
-									{showAllCuisines ? (
-										<span className="mr-1">-</span>
-									) : (
-										<span className="mr-1">+</span>
-									)}
-									{showAllCuisines ? "Show less" : "Show more"}
-								</button>
-							</div>
-							{/* Dietary/Options */}
-							<div className="mb-6">
-								<h3 className="font-medium mb-2">Dietary/Options</h3>
-								{dietaryOptions.map(opt => (
-									<div key={opt} className="flex items-center mb-1">
-										<Checkbox
-											checked={selectedFilters.includes(opt)}
-											onCheckedChange={() => toggleFilter(opt)}
-											id={`dietary-mobile-${opt}`}
-										/>
-										<label className="ml-2 text-sm" htmlFor={`dietary-mobile-${opt}`}>{opt}</label>
-									</div>
-								))}
-							</div>
-							{/* Seating/Features */}
-							<div className="mb-6">
-								<h3 className="font-medium mb-2">Seating/Features</h3>
-								{seatingFeatures.map(feat => (
-									<div key={feat} className="flex items-center mb-1">
-										<Checkbox
-											checked={selectedFilters.includes(feat)}
-											onCheckedChange={() => toggleFilter(feat)}
-											id={`seating-mobile-${feat}`}
-										/>
-										<label className="ml-2 text-sm" htmlFor={`seating-mobile-${feat}`}>{feat}</label>
-									</div>
-								))}
-							</div>
-							{/* Payment */}
-							<div className="mb-6">
-								<h3 className="font-medium mb-2">Payment</h3>
-								{paymentOptions.map(pay => (
-									<div key={pay} className="flex items-center mb-1">
-										<Checkbox
-											checked={selectedFilters.includes(pay)}
-											onCheckedChange={() => toggleFilter(pay)}
-											id={`payment-mobile-${pay}`}
-										/>
-										<label className="ml-2 text-sm" htmlFor={`payment-mobile-${pay}`}>{pay}</label>
-									</div>
-								))}
-							</div>
-							{/* Accessibility */}
-							<div className="mb-6">
-								<h3 className="font-medium mb-2">Accessibility</h3>
-								{accessibilityOptions.map(acc => (
-									<div key={acc} className="flex items-center mb-1">
-										<Checkbox
-											checked={selectedFilters.includes(acc)}
-											onCheckedChange={() => toggleFilter(acc)}
-											id={`accessibility-mobile-${acc}`}
-										/>
-										<label className="ml-2 text-sm" htmlFor={`accessibility-mobile-${acc}`}>{acc}</label>
-									</div>
-								))}
-							</div>
-							{/* Price Level (slider) */}
-							<div className="mb-6">
-								<h3 className="font-medium mb-2">Restaurant Price</h3>
-								<Slider
-									min={1}
-									max={5}
-									step={1}
-									value={priceRange}
-									onValueChange={setPriceRange}
-								/>
-								<div className="flex justify-between text-xs mt-1">
-									<span>$</span>
-									<span>$$</span>
-									<span>$$$</span>
-									<span>$$$$</span>
-									<span>$$$$$</span>
-								</div>
-							</div>
-							{/* Review Score (slider) */}
-							<div className="mb-6">
-								<h3 className="font-medium mb-2">Review score</h3>
-								<Slider
-									min={1}
-									max={6}
-									step={1}
-									value={ratingRange}
-									onValueChange={setRatingRange}
-								/>
-								<div className="flex justify-between text-xs mt-1">
-									{[1, 2, 3, 4, 5, 6].map((n) => (
-										<span key={n}>{n}</span>
-									))}
-								</div>
-							</div>
-							<ChoiceChipGroup
-							  label="Price Level"
-							  options={["$", "$$", "$$$", "$$$$", "$$$$$"]}
-							  selected={priceValue}
-							  onChange={setPriceValue}
-							/>
-							
-							<ChoiceChipGroup
-							  label="Review Score"
-							  options={[1, 2, 3, 4, 5, 6]}
-							  selected={reviewScore}
-							  onChange={setReviewScore}
-							/>
-							{/* Bookable Toggle */}
-							<div className="flex items-center mb-4">
-								<Switch
-									checked={bookable}
-									onCheckedChange={setBookable}
-									id="bookable-mobile"
-								/>
-								<label className="ml-2 text-sm font-medium">Bookable online</label>
-							</div>
-							{/* Others */}
-							<div className="mb-4">
-								<h3 className="font-medium mb-2">Others</h3>
-								{otherOptions.map(opt => (
-									<div key={opt} className="flex items-center mb-1">
-										<Checkbox
-											checked={selectedFilters.includes(opt)}
-											onCheckedChange={() => toggleFilter(opt)}
-											id={`other-mobile-${opt}`}
-										/>
-										<label className="ml-2 text-sm" htmlFor={`other-mobile-${opt}`}>{opt}</label>
-									</div>
-								))}
-							</div>
-						</div>
-					</div>,
-					document.body
-				)}
-				{/* Main Content (Map/List) */}
-				<div className="flex-1 h-full relative">
-					{view === "map" ? (
+			{/* Main Content (Map/List) */}
+			<div className="flex-1 flex flex-col h-0">
+				{view === "map" ? (
+					<div style={{ height: "80vh" }}>
 						<RestaurantMap
 							restaurants={results}
 							userLocation={userLocation}
@@ -616,64 +254,64 @@ export default function RestaurantFinder({ userLocation }) {
 							setSelectedPlace={setSelectedPlace}
 							searchPerformed={searchPerformed}
 						/>
-					) : (
-						<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-							{loading && <p>Loading...</p>}
-							{error && <p className="text-red-500">{error}</p>}
-							{/* Show a friendly message if no places are found */}
-							{!loading && !error && results.length === 0 && (
-								<div className="col-span-full flex flex-col items-center justify-center py-16">
-									{/* Icon (e.g., map pin with a question mark) */}
-									<svg width="48" height="48" fill="none" viewBox="0 0 48 48" className="mb-4 text-gray-300"><circle cx="24" cy="24" r="22" stroke="#E53E3E" strokeWidth="3" fill="#FFF5F5"/><path d="M24 32v-2m0-12a4 4 0 0 1 4 4c0 2-2 3-2 3s-2 1-2 3" stroke="#E53E3E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="24" cy="36" r="1.5" fill="#E53E3E"/></svg>
-									<h2 className="text-lg font-semibold text-gray-700 mb-2">No places found</h2>
-									<p className="text-gray-500 text-sm text-center max-w-xs">Try adjusting your search, filters, or zooming out to find more restaurants and cafes in the area.</p>
-								</div>
-							)}
-							{results.map((restaurant, i) => (
-								<Card
-									key={restaurant.name + i}
-									className={`p-4 shadow-md rounded-xl w-full cursor-pointer transition border-2 bg-white text-gray-900 font-sans ${
-										selectedPlace === restaurant.name ? 'border-red-500 ring-2 ring-red-200' : 'border-transparent'
-									}`}
-									onClick={() => setSelectedPlace(restaurant.name)}
-								>
-									<div className="flex items-center">
-										{/* Thumbnail or placeholder */}
-										<img
-											src={restaurant.image || '/placeholder.jpg'}
-											alt={restaurant.name}
-											className="w-16 h-16 rounded-lg object-cover mr-4 bg-gray-100"
-										/>
-										<div className="flex-1 min-w-0">
-											<h3 className="font-semibold text-lg truncate">{restaurant.name}</h3>
-											<div className="flex items-center text-yellow-500 text-sm mt-1">
-												<span>★</span>
-												<span className="ml-1 font-medium text-gray-800">{restaurant.rating || 'N/A'}</span>
-												{restaurant.review_count && (
-													<span className="ml-2 text-gray-400 text-xs">{restaurant.review_count} reviews</span>
-												)}
-											</div>
-											<div className="text-xs text-gray-500 mt-1 truncate">{restaurant.cuisine}</div>
-											<div className="text-xs text-gray-500 truncate">{restaurant.address?.['addr:street'] || ''}</div>
+					</div>
+				) : (
+					<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+						{loading && <p>Loading...</p>}
+						{error && <p className="text-red-500">{error}</p>}
+						{/* Show a friendly message if no places are found */}
+						{!loading && !error && results.length === 0 && (
+							<div className="col-span-full flex flex-col items-center justify-center py-16">
+								{/* Icon (e.g., map pin with a question mark) */}
+								<svg width="48" height="48" fill="none" viewBox="0 0 48 48" className="mb-4 text-gray-300"><circle cx="24" cy="24" r="22" stroke="#E53E3E" strokeWidth="3" fill="#FFF5F5"/><path d="M24 32v-2m0-12a4 4 0 0 1 4 4c0 2-2 3-2 3s-2 1-2 3" stroke="#E53E3E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="24" cy="36" r="1.5" fill="#E53E3E"/></svg>
+								<h2 className="text-lg font-semibold text-gray-700 mb-2">No places found</h2>
+								<p className="text-gray-500 text-sm text-center max-w-xs">Try adjusting your search, filters, or zooming out to find more restaurants and cafes in the area.</p>
+							</div>
+						)}
+						{results.map((restaurant, i) => (
+							<Card
+								key={restaurant.name + i}
+								className={`p-4 shadow-md rounded-xl w-full cursor-pointer transition border-2 bg-white text-gray-900 font-sans ${
+									selectedPlace === restaurant.name ? 'border-red-500 ring-2 ring-red-200' : 'border-transparent'
+								}`}
+								onClick={() => setSelectedPlace(restaurant.name)}
+							>
+								<div className="flex items-center">
+									{/* Thumbnail or placeholder */}
+									<img
+										src={restaurant.image || '/placeholder.jpg'}
+										alt={restaurant.name}
+										className="w-16 h-16 rounded-lg object-cover mr-4 bg-gray-100"
+									/>
+									<div className="flex-1 min-w-0">
+										<h3 className="font-semibold text-lg truncate">{restaurant.name}</h3>
+										<div className="flex items-center text-yellow-500 text-sm mt-1">
+											<span>★</span>
+											<span className="ml-1 font-medium text-gray-800">{restaurant.rating || 'N/A'}</span>
+											{restaurant.review_count && (
+												<span className="ml-2 text-gray-400 text-xs">{restaurant.review_count} reviews</span>
+											)}
 										</div>
+										<div className="text-xs text-gray-500 mt-1 truncate">{restaurant.cuisine}</div>
+										<div className="text-xs text-gray-500 truncate">{restaurant.address?.['addr:street'] || ''}</div>
 									</div>
-									{/* Feature icons and distance */}
-									<div className="flex items-center mt-2 text-xs text-gray-600 gap-2">
-										{/* Example feature icons, add more as needed */}
-										{restaurant.cuisine?.toLowerCase().includes('vegan') && <span title="Vegan">🥦</span>}
-										{restaurant.cuisine?.toLowerCase().includes('vegetarian') && <span title="Vegetarian">🥗</span>}
-										{/* Add more icons for features like outdoor seating, etc. */}
-										<span className="ml-auto">{restaurant.distance ? `${restaurant.distance} mi` : ''}</span>
-									</div>
-									<div className="flex justify-between items-center mt-2">
-										<SaveRestaurantButton restaurant={restaurant} />
-										<Button size="sm" variant="outline">Details</Button>
-									</div>
-								</Card>
-							))}
-						</div>
-					)}
-				</div>
+								</div>
+								{/* Feature icons and distance */}
+								<div className="flex items-center mt-2 text-xs text-gray-600 gap-2">
+									{/* Example feature icons, add more as needed */}
+									{restaurant.cuisine?.toLowerCase().includes('vegan') && <span title="Vegan">🥦</span>}
+									{restaurant.cuisine?.toLowerCase().includes('vegetarian') && <span title="Vegetarian">��</span>}
+									{/* Add more icons for features like outdoor seating, etc. */}
+									<span className="ml-auto">{restaurant.distance ? `${restaurant.distance} mi` : ''}</span>
+								</div>
+								<div className="flex justify-between items-center mt-2">
+									<SaveRestaurantButton restaurant={restaurant} />
+									<Button size="sm" variant="outline">Details</Button>
+								</div>
+							</Card>
+						))}
+					</div>
+				)}
 			</div>
 		</div>
 	);

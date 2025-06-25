@@ -53,11 +53,15 @@ const SaveRestaurantButton = ({ restaurant }) => {
         const { error } = await savedRestaurants.remove(user.id, restaurantId);
         if (error) throw error;
         setIsSaved(false);
+        // Notify other components
+        window.dispatchEvent(new Event('saved-restaurants-updated'));
       } else {
         // Add to saved
         const { error } = await savedRestaurants.add(user.id, { ...restaurant, id: restaurantId });
         if (error) throw error;
         setIsSaved(true);
+        // Notify other components
+        window.dispatchEvent(new Event('saved-restaurants-updated'));
       }
     } catch (error) {
       console.error('Error toggling save:', error);

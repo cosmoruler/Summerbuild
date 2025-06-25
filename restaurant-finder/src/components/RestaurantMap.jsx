@@ -71,7 +71,7 @@ export default function RestaurantMap({ restaurants, userLocation, selectedPlace
       zoom={15}
       minZoom={11}
       maxZoom={18}
-      className="w-full h-80 sm:h-[400px] rounded-lg"
+      className="w-full h-full rounded-lg"
       maxBounds={singaporeBounds}
       maxBoundsViscosity={1.0} // Prevents panning outside Singapore
     >
