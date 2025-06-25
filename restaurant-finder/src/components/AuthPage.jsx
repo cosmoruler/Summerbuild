@@ -54,7 +54,7 @@ const AuthPage = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Input */}
-            <div>
+            <div className="relative">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
@@ -64,13 +64,24 @@ const AuthPage = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent pr-8"
                 placeholder="Enter your email"
               />
+              {email && (
+                <button
+                  type="button"
+                  className="absolute right-2 top-9 text-gray-400 hover:text-red-500 focus:outline-none"
+                  onClick={() => setEmail('')}
+                  tabIndex={-1}
+                  aria-label="Clear email"
+                >
+                  ×
+                </button>
+              )}
             </div>
 
             {/* Password Input */}
-            <div>
+            <div className="relative">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
@@ -81,13 +92,16 @@ const AuthPage = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   placeholder="Enter your password"
                 />
+                {/* Show/hide password button */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  tabIndex={-1}
+                  aria-label="Show/hide password"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4 text-gray-400" />
@@ -95,6 +109,18 @@ const AuthPage = () => {
                     <Eye className="h-4 w-4 text-gray-400" />
                   )}
                 </button>
+                {/* Clear password button */}
+                {password && (
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-8 flex items-center text-gray-400 hover:text-red-500 focus:outline-none"
+                    onClick={() => setPassword('')}
+                    tabIndex={-1}
+                    aria-label="Clear password"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
             </div>
 

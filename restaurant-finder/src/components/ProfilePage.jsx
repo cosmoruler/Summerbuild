@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Heart, Trash2, Mail, Key, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
@@ -12,6 +13,12 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [error, setError] = useState('');
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [repeatNewPassword, setRepeatNewPassword] = useState('');
+  const [passwordChangeLoading, setPasswordChangeLoading] = useState(false);
+  const [passwordChangeMessage, setPasswordChangeMessage] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -46,16 +53,42 @@ const ProfilePage = () => {
     }
   };
 
-  const handlePasswordReset = async () => {
-    setError('');
-    setResetEmailSent(false);
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordChangeMessage('');
+    if (newPassword !== repeatNewPassword) {
+      setPasswordChangeMessage('New passwords do not match.');
+      return;
+    }
+    setPasswordChangeLoading(true);
     try {
-      // Supabase: send password reset email
-      const { error } = await window.supabase.auth.resetPasswordForEmail(user.email);
-      if (error) throw error;
-      setResetEmailSent(true);
+      // 1. Re-authenticate user with current password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+      if (signInError) {
+        setPasswordChangeMessage('Current password is incorrect.');
+        setPasswordChangeLoading(false);
+        return;
+      }
+      // 2. Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (updateError) {
+        setPasswordChangeMessage('Failed to update password.');
+      } else {
+        setPasswordChangeMessage('Password updated successfully!');
+        setShowPasswordForm(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setRepeatNewPassword('');
+      }
     } catch (err) {
-      setError('Failed to send password reset email.');
+      setPasswordChangeMessage('An error occurred. Please try again.');
+    } finally {
+      setPasswordChangeLoading(false);
     }
   };
 
@@ -81,12 +114,89 @@ const ProfilePage = () => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
-            <Button variant="outline" className="flex items-center gap-2 w-fit" onClick={handlePasswordReset}>
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 w-fit"
+              onClick={() => setShowPasswordForm((v) => !v)}
+            >
               <Key className="h-4 w-4" />
               Reset Password
             </Button>
-            {resetEmailSent && <p className="text-green-600 text-sm">Password reset email sent!</p>}
-            {error && <p className="text-red-600 text-sm">{error}</p>}
+            {showPasswordForm && (
+              <form onSubmit={handlePasswordChange} className="flex flex-col gap-2 mt-4 max-w-xs">
+                <div className="relative">
+                  <input
+                    type="password"
+                    placeholder="Current password"
+                    value={currentPassword}
+                    onChange={e => setCurrentPassword(e.target.value)}
+                    className="border rounded px-3 py-2 w-full pr-8"
+                    required
+                  />
+                  {currentPassword && (
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 focus:outline-none"
+                      onClick={() => setCurrentPassword('')}
+                      tabIndex={-1}
+                      aria-label="Clear current password"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type="password"
+                    placeholder="New password"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    className="border rounded px-3 py-2 w-full pr-8"
+                    required
+                  />
+                  {newPassword && (
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 focus:outline-none"
+                      onClick={() => setNewPassword('')}
+                      tabIndex={-1}
+                      aria-label="Clear new password"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type="password"
+                    placeholder="Repeat new password"
+                    value={repeatNewPassword}
+                    onChange={e => setRepeatNewPassword(e.target.value)}
+                    className="border rounded px-3 py-2 w-full pr-8"
+                    required
+                  />
+                  {repeatNewPassword && (
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 focus:outline-none"
+                      onClick={() => setRepeatNewPassword('')}
+                      tabIndex={-1}
+                      aria-label="Clear repeat new password"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+                <Button type="submit" disabled={passwordChangeLoading}>
+                  {passwordChangeLoading ? 'Updating...' : 'Change Password'}
+                </Button>
+                {passwordChangeMessage && (
+                  <p className={`text-sm mt-2 ${passwordChangeMessage.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
+                    {passwordChangeMessage}
+                  </p>
+                )}
+              </form>
+            )}
             <Button variant="destructive" className="w-fit" onClick={signOut}>Sign Out</Button>
           </div>
         </CardContent>
