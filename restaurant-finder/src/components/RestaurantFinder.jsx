@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Card } from "@/components/ui/card";
+//import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+
 import { Filter, Menu, Search, X } from "lucide-react";
 import useRecommendations from "../hooks/useRecommendations"; // Import the custom hook
 import RestaurantMap from './RestaurantMap';
@@ -268,51 +270,77 @@ export default function RestaurantFinder({ userLocation }) {
 								<p className="text-gray-500 text-sm text-center max-w-xs">Try adjusting your search, filters, or zooming out to find more restaurants and cafes in the area.</p>
 							</div>
 						)}
-						{results.map((restaurant, i) => (
-							<Card
-								key={restaurant.name + i}
-								className={`p-4 shadow-md rounded-xl w-full cursor-pointer transition border-2 bg-white text-gray-900 font-sans ${
-									selectedPlace === restaurant.name ? 'border-red-500 ring-2 ring-red-200' : 'border-transparent'
-								}`}
-								onClick={() => setSelectedPlace(restaurant.name)}
-							>
-								<div className="flex items-center">
-									{/* Thumbnail or placeholder */}
-									<img
-										src={restaurant.image || '/placeholder.jpg'}
-										alt={restaurant.name}
-										className="w-16 h-16 rounded-lg object-cover mr-4 bg-gray-100"
-									/>
-									<div className="flex-1 min-w-0">
-										<h3 className="font-semibold text-lg truncate">{restaurant.name}</h3>
-										<div className="flex items-center text-yellow-500 text-sm mt-1">
-											<span>★</span>
-											<span className="ml-1 font-medium text-gray-800">{restaurant.rating || 'N/A'}</span>
-											{restaurant.review_count && (
-												<span className="ml-2 text-gray-400 text-xs">{restaurant.review_count} reviews</span>
-											)}
-										</div>
-										<div className="text-xs text-gray-500 mt-1 truncate">{restaurant.cuisine}</div>
-										<div className="text-xs text-gray-500 truncate">{restaurant.address?.['addr:street'] || ''}</div>
-									</div>
-								</div>
-								{/* Feature icons and distance */}
-								<div className="flex items-center mt-2 text-xs text-gray-600 gap-2">
-									{/* Example feature icons, add more as needed */}
-									{restaurant.cuisine?.toLowerCase().includes('vegan') && <span title="Vegan">🥦</span>}
-									{restaurant.cuisine?.toLowerCase().includes('vegetarian') && <span title="Vegetarian">��</span>}
-									{/* Add more icons for features like outdoor seating, etc. */}
-									<span className="ml-auto">{restaurant.distance ? `${restaurant.distance} mi` : ''}</span>
-								</div>
-								<div className="flex justify-between items-center mt-2">
-									<SaveRestaurantButton restaurant={restaurant} />
-									<Button size="sm" variant="outline">Details</Button>
-								</div>
-							</Card>
+									{results.map((restaurant, i) => (
+					<Card key={restaurant.name + i} className="p-4 shadow-md rounded-xl w-full">
+						<CardHeader className="flex items-center gap-4">
+						<img
+							src={restaurant.image || '/placeholder.jpg'}
+							alt={restaurant.name}
+							className="w-16 h-16 rounded-lg object-cover bg-gray-100"
+						/>
+						<div className="flex-1">
+							<CardTitle className="truncate text-lg">{restaurant.name}</CardTitle>
+							<CardDescription className="text-xs">{restaurant.cuisine || "Cuisine not specified"}</CardDescription>
+						</div>
+						</CardHeader>
+
+						<CardContent className="text-sm text-gray-700 space-y-1">
+						<div>
+							<span className="font-semibold">Rating:</span>{" "}
+							{restaurant.rating ? (
+							<span>{restaurant.rating}</span>
+							) : (
+							<span className="italic text-gray-400">Not specified</span>
+							)}
+						</div>
+
+						<div>
+							<span className="font-semibold">Reviews:</span>{" "}
+							{restaurant.review_count ? (
+							<span>{restaurant.review_count}</span>
+							) : (
+							<span className="italic text-gray-400">No reviews</span>
+							)}
+						</div>
+
+						<div>
+							<span className="font-semibold">Price:</span>{" "}
+							{restaurant.price_level || <span className="italic text-gray-400">Not specified</span>}
+						</div>
+
+						<div className="break-words overflow-hidden text-ellipsis">
+							<span className="font-semibold">Address:</span>{" "}
+							{restaurant.address?.['addr:street'] || (
+								<span className="italic text-gray-400">Not specified</span>
+							)}
+						</div>
+
+
+						{restaurant.opening_hours && (
+							<div>
+							<span className="font-semibold">Hours:</span> {restaurant.opening_hours}
+							</div>
+						)}
+						</CardContent>
+
+						<CardFooter className="flex flex-wrap gap-1 text-xs">
+						{restaurant.website && (
+							<a href={restaurant.website} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">
+							Website
+							</a>
+						)}
+						{restaurant.phone && <span className="text-gray-600">{restaurant.phone}</span>}
+						{restaurant.amenities?.map((tag, index) => (
+							<span key={index} className="bg-gray-100 px-2 py-0.5 rounded-full">
+							{tag.replace(/_/g, ' ')}
+							</span>
 						))}
-					</div>
-				)}
-			</div>
+						</CardFooter>
+					</Card>
+					))}
+             </div>   
+           )}       
+           </div>   
 
 			{/* Filter Overlay Portal */}
 			{showFilters && createPortal(

@@ -36,6 +36,30 @@ def recommend(
     # Clean recommendations for frontend
     recommendations = recommender._clean_recommendations(raw_recommendations)
 
+# -----------------------------------------------------------
+#  Enrich each place with extra fields the frontend can show
+# -----------------------------------------------------------
+    for place in recommendations:
+        tags = place.get("tags", {})  # Overpass tags dict
+
+        # Lat/Lon: insure they’re carried over (in case _clean_recommendations dropped them)
+        place["lat"] = place.get("lat") or place.get("latitude")
+        place["lon"] = place.get("lon") or place.get("longitude")
+
+        # Opening hours, website, phone
+        place["opening_hours"] = tags.get("opening_hours")
+        place["website"]        = tags.get("website")
+        place["phone"]          = tags.get("phone") or tags.get("contact:phone")
+
+        # Convert “yes” style tags into a compact amenity list
+        amenity_keys = ["wifi", "outdoor_seating", "wheelchair", "reservation", "delivery"]
+        place["amenities"] = [
+            key for key in amenity_keys if tags.get(key) == "yes"
+        ]
+
+        # Keep raw tags too (optional, but handy for future tweaks)
+        place["tags"] = tags
+
     # --- Post-process filtering based on query params ---
     filtered = []
     for place in recommendations:
@@ -62,7 +86,7 @@ def recommend(
 
         # Filter by bookable (e.g., reservation or online booking)
         if bookable:
-            tags = place.get('type', {})
+            tags = place.get('tags', {}) 
             if not (tags.get('reservation') == 'yes' or tags.get('bookable') == 'yes'):
                 continue
 
